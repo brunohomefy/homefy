@@ -57,7 +57,9 @@ async function tocar(texto, { exato = false } = {}) {
 
 // Digita num campo de busca (o Flutter só expõe o que está visível na tela).
 async function buscar(rotulo, texto) {
-  await tocar(rotulo);
+  const campo = page.getByRole('textbox', { name: rotulo }).first();
+  if (await campo.count()) await campo.click({ force: true });
+  else await tocar(rotulo);
   await page.keyboard.type(texto, { delay: 30 });
   await page.waitForTimeout(800);
 }
@@ -95,8 +97,7 @@ await passo('oferta', async () => {
   await buscar('Procurar bairro', 'salga'); await tocar('Salgado', { exato: true });
   await foto('oferta_2_marcado');
   await tocar('Continuar');
-  await tocar('WhatsApp').catch(() => {});
-  await page.keyboard.type('81999991234');
+  await buscar('WhatsApp', '81999991234');
   await foto('oferta_3_contato');
   await tocar('Continuar'); await foto('oferta_4_revisao');
   await tocar('Começar a oferecer'); await page.waitForTimeout(1500); await foto('meus_servicos_vazio');
