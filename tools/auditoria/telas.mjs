@@ -30,6 +30,7 @@ async function acessibilidade() {
 
 async function abrir(rota) {
   await page.goto(base + '#' + rota);
+  await page.reload(); // trocar só o #/rota não recarrega: fecharia folhas abertas
   await page.waitForTimeout(rota === '/home' ? 4000 : 2500);
   await acessibilidade();
 }
@@ -54,6 +55,13 @@ async function tocar(texto, { exato = false } = {}) {
   throw new Error('não achei: ' + texto);
 }
 
+// Digita num campo de busca (o Flutter só expõe o que está visível na tela).
+async function buscar(rotulo, texto) {
+  await tocar(rotulo);
+  await page.keyboard.type(texto, { delay: 30 });
+  await page.waitForTimeout(800);
+}
+
 async function rolar(px) {
   await page.mouse.move(195, 500);
   await page.mouse.wheel(0, px);
@@ -70,6 +78,7 @@ await passo('bairro', async () => {
   await abrir('/home');
   await tocar('Onde será o atendimento');
   await foto('escolher_bairro');
+  await buscar('Procurar bairro', 'salga');
   await tocar('Salgado', { exato: true });
   await foto('home_salgado');
 });
@@ -83,7 +92,8 @@ await passo('oferta', async () => {
   await tocar('Continuar'); await foto('oferta_1_erro');
   await tocar('Lavagem de veículos'); await tocar('Lavagem simples'); await foto('oferta_1_marcado');
   await tocar('Continuar'); await foto('oferta_2_bairros');
-  await tocar('Salgado', { exato: true }); await tocar('Kennedy', { exato: true }); await foto('oferta_2_marcado');
+  await buscar('Procurar bairro', 'salga'); await tocar('Salgado', { exato: true });
+  await foto('oferta_2_marcado');
   await tocar('Continuar');
   await tocar('WhatsApp').catch(() => {});
   await page.keyboard.type('81999991234');
