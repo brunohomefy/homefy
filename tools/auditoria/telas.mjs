@@ -46,7 +46,6 @@ async function tocar(texto, { exato = false } = {}) {
   for (const t of tentativas) {
     const alvo = t.first();
     if (await alvo.count()) {
-      await alvo.scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
       await alvo.click({ timeout: 4000, force: true });
       await page.waitForTimeout(800);
       return;
