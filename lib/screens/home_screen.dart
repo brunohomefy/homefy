@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../models/bairros.dart';
 import '../models/categoria.dart';
+import '../models/perfil.dart';
 import '../models/servico.dart';
 import '../services/auth_service.dart';
+import '../services/perfil_repo.dart';
 import '../services/servicos_repo.dart';
 import '../theme/homefy_theme.dart';
 import '../widgets/formulario.dart';
 import '../widgets/homefy_logo.dart';
+import '../widgets/feedback_sheet.dart';
 import '../widgets/servico_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,10 +25,25 @@ class _HomeScreenState extends State<HomeScreen> {
   final _busca = TextEditingController();
   Categoria? _categoria;
 
+  /// Bairro onde será o atendimento. Filtro temporário: não é salvo no perfil.
+  String? _bairro;
+
   @override
   void initState() {
     super.initState();
     _busca.addListener(() => setState(() {}));
+    // Contas antigas: tira o e-mail do perfil público e cria o perfil se faltar.
+    PerfilRepo.instance.arrumarPerfil();
+  }
+
+  Future<void> _escolherBairro() async {
+    final escolhido = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _EscolherBairro(atual: _bairro),
+    );
+    if (escolhido == null) return;
+    setState(() => _bairro = escolhido.isEmpty ? null : escolhido);
   }
 
   @override
@@ -36,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final termo = normalizar(_busca.text.trim());
     return todos.where((s) {
       if (_categoria != null && s.categoriaMvp?.id != _categoria!.id) return false;
+      if (_bairro != null && !s.atende(_bairro!)) return false;
       if (termo.isEmpty) return true;
       if (normalizar('${s.nome} ${s.categoria} ${s.subtipoRotulo ?? ''} ${s.descricao}').contains(termo)) {
         return true;
@@ -54,7 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
           constraints: const BoxConstraints(maxWidth: 640),
           child: CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _Cabecalho(busca: _busca)),
+              SliverToBoxAdapter(
+                child: _Cabecalho(busca: _busca, bairro: _bairro, aoEscolherBairro: _escolherBairro),
+              ),
               SliverToBoxAdapter(
                 child: _Categorias(
                   selecionada: _categoria,
@@ -64,6 +87,17 @@ class _HomeScreenState extends State<HomeScreen> {
               StreamBuilder<List<Servico>>(
                 stream: _servicos,
                 builder: (context, snap) => _listaServicos(context, snap),
+              ),
+              SliverToBoxAdapter(
+                child: _NaoAchou(
+                  aoTocar: () => abrirFeedback(
+                    context,
+                    tipo: TipoFeedback.naoAchei,
+                    busca: _busca.text.trim(),
+                    categoriaId: _categoria?.id,
+                    bairro: _bairro,
+                  ),
+                ),
               ),
               const SliverToBoxAdapter(child: _ConviteProfissional()),
               SliverToBoxAdapter(
@@ -127,17 +161,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else if (filtrados.isEmpty) {
-      final temFiltro = _categoria != null || _busca.text.trim().isNotEmpty;
+      final temFiltro = _categoria != null || _bairro != null || _busca.text.trim().isNotEmpty;
       corpo = _EstadoVazio(
         icone: temFiltro ? Icons.search_off_rounded : Icons.inventory_2_outlined,
         titulo: temFiltro ? 'Nada encontrado' : 'Ainda não há serviços ativos',
         texto: temFiltro
-            ? 'Tente outra palavra ou outra categoria.'
+            ? (_bairro != null
+                ? 'Ainda não há profissional para isso em ${Bairro.nomeDe(_bairro!)}. Tente outro bairro ou nos conte o que procura.'
+                : 'Tente outra palavra ou outra categoria.')
             : 'Assim que houver serviços com "ativo = true" no banco, eles aparecem aqui.',
         acao: temFiltro
             ? TextButton(
                 onPressed: () => setState(() {
                   _categoria = null;
+                  _bairro = null;
                   _busca.clear();
                 }),
                 child: const Text('Limpar filtros'),
@@ -185,8 +222,10 @@ class _HomeScreenState extends State<HomeScreen> {
 // ───────────────────────── Cabeçalho ─────────────────────────
 
 class _Cabecalho extends StatelessWidget {
-  const _Cabecalho({required this.busca});
+  const _Cabecalho({required this.busca, required this.bairro, required this.aoEscolherBairro});
   final TextEditingController busca;
+  final String? bairro;
+  final VoidCallback aoEscolherBairro;
 
   @override
   Widget build(BuildContext context) {
@@ -240,15 +279,33 @@ class _Cabecalho extends StatelessWidget {
                         style: t.headlineSmall?.copyWith(color: Colors.white)),
                     const SizedBox(height: 20),
                     _CampoBusca(controller: busca),
-                    const SizedBox(height: 14),
-                    Row(children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 16, color: Colors.white.withValues(alpha: 0.8)),
-                      const SizedBox(width: 4),
-                      Text('Atendendo em Caruaru – PE',
-                          style: t.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8))),
-                    ]),
+                    const SizedBox(height: 12),
+                    Material(
+                      color: Colors.white.withValues(alpha: bairro == null ? 0.12 : 0.22),
+                      borderRadius: BorderRadius.circular(99),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(99),
+                        onTap: aoEscolherBairro,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 7, 8, 7),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.location_on_outlined, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                bairro == null
+                                    ? 'Onde será o atendimento? Escolha o bairro'
+                                    : '${Bairro.nomeDe(bairro!)}, Caruaru',
+                                overflow: TextOverflow.ellipsis,
+                                style: t.bodySmall?.copyWith(
+                                    color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const Icon(Icons.expand_more_rounded, size: 18, color: Colors.white),
+                          ]),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -364,13 +421,30 @@ class _FolhaPerfil extends StatelessWidget {
             ]),
             const SizedBox(height: 20),
             const Divider(),
+            StreamBuilder<PerfilUsuario?>(
+              stream: PerfilRepo.instance.meu(),
+              builder: (context, snap) {
+                final prof = snap.data?.ehProfissional == true;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(prof ? Icons.storefront_outlined : Icons.work_outline_rounded),
+                  title: Text(prof ? 'Meus serviços' : 'Quero oferecer meus serviços'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push(prof ? '/meus-servicos' : '/oferecer');
+                  },
+                );
+              },
+            ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.chat_bubble_outline_rounded),
-              title: const Text('Enviar sugestão'),
-              subtitle: const Text('Em breve'),
-              enabled: false,
-              onTap: () {},
+              title: const Text('Conte sua experiência'),
+              subtitle: const Text('Sugestões, ideias, o que melhorar'),
+              onTap: () {
+                Navigator.of(context).pop();
+                abrirFeedback(context, tipo: TipoFeedback.experiencia);
+              },
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -522,7 +596,7 @@ class _DetalheServico extends StatelessWidget {
         );
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -549,13 +623,31 @@ class _DetalheServico extends StatelessWidget {
             ],
             if (servico.profissionalRef != null) SobreProfissional(servico: servico),
             const SizedBox(height: 20),
-            Row(children: [
-              info(Icons.payments_outlined, 'A partir de',
-                  servico.precoFormatado ?? 'Sob consulta'),
-              const SizedBox(width: 12),
-              info(Icons.schedule_rounded, 'Duração média',
-                  servico.duracaoFormatada ?? 'A combinar'),
-            ]),
+            if (servico.temVariacoes)
+              _TabelaVariacoes(servico: servico, cor: cor)
+            else
+              Row(children: [
+                info(Icons.payments_outlined, 'A partir de',
+                    servico.precoFormatado ?? 'Sob consulta'),
+                const SizedBox(width: 12),
+                info(Icons.schedule_rounded, 'Duração média',
+                    servico.duracaoFormatada ?? 'A combinar'),
+              ]),
+            if (servico.atendeTodaCidade || servico.bairros.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(Icons.place_outlined, size: 18, color: cor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    servico.atendeTodaCidade
+                        ? 'Atende Caruaru toda'
+                        : 'Atende: ${servico.bairros.map(Bairro.nomeDe).join(', ')}',
+                    style: t.bodySmall?.copyWith(height: 1.4),
+                  ),
+                ),
+              ]),
+            ],
             const SizedBox(height: 12),
             Text(
               'O valor final é combinado com o profissional e só vale depois da sua aprovação.',
@@ -584,6 +676,13 @@ class _ConviteProfissional extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<PerfilUsuario?>(
+      stream: PerfilRepo.instance.meu(),
+      builder: (context, snap) => _cartao(context, snap.data?.ehProfissional == true),
+    );
+  }
+
+  Widget _cartao(BuildContext context, bool profissional) {
     final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -596,10 +695,13 @@ class _ConviteProfissional extends StatelessWidget {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Você é profissional?',
+              Text(profissional ? 'Sua vitrine' : 'Você é profissional?',
                   style: t.titleMedium?.copyWith(color: HomefyColors.primaryDark)),
               const SizedBox(height: 4),
-              Text('Com a mesma conta você poderá oferecer seus serviços em Caruaru.',
+              Text(
+                  profissional
+                      ? 'Cadastre, edite ou esconda seus serviços quando quiser.'
+                      : 'Com a mesma conta você pode oferecer seus serviços em Caruaru.',
                   style: t.bodySmall?.copyWith(color: HomefyColors.primaryDark, height: 1.4)),
               const SizedBox(height: 12),
               FilledButton.tonal(
@@ -608,8 +710,8 @@ class _ConviteProfissional extends StatelessWidget {
                   backgroundColor: HomefyColors.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => mostrarAviso('Cadastro de profissional chega na próxima etapa.'),
-                child: const Text('Quero oferecer'),
+                onPressed: () => context.push(profissional ? '/meus-servicos' : '/oferecer'),
+                child: Text(profissional ? 'Meus serviços' : 'Quero oferecer'),
               ),
             ]),
           ),
@@ -671,6 +773,158 @@ class _EntradaAnimada extends StatelessWidget {
       builder: (context, v, child) => Opacity(
         opacity: v,
         child: Transform.translate(offset: Offset(0, (1 - v) * 16), child: child),
+      ),
+    );
+  }
+}
+
+// ───────────────────────── Bairro, variações e "não achou" ─────────────────────────
+
+/// Lista de bairros para o cliente dizer onde será o atendimento.
+/// Devolve o id do bairro, ou '' para "todos".
+class _EscolherBairro extends StatefulWidget {
+  const _EscolherBairro({required this.atual});
+  final String? atual;
+  @override
+  State<_EscolherBairro> createState() => _EscolherBairroState();
+}
+
+class _EscolherBairroState extends State<_EscolherBairro> {
+  final _busca = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _busca.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _busca.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final termo = normalizar(_busca.text.trim());
+    final lista = Bairro.todos.where((b) => termo.isEmpty || normalizar(b.nome).contains(termo)).toList();
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.8,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Onde será o atendimento?', style: t.titleLarge),
+              const SizedBox(height: 4),
+              Text('Mostramos só quem atende o seu bairro. Não fica salvo no seu perfil.',
+                  style: t.bodySmall),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _busca,
+                autofocus: false,
+                decoration: const InputDecoration(
+                  hintText: 'Procurar bairro',
+                  prefixIcon: Icon(Icons.search_rounded, size: 20),
+                ),
+              ),
+            ]),
+          ),
+          Expanded(
+            child: ListView(children: [
+              if (termo.isEmpty)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  leading: const Icon(Icons.public_rounded),
+                  title: const Text('Todos os bairros'),
+                  trailing: widget.atual == null
+                      ? const Icon(Icons.check_rounded, color: HomefyColors.primary)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(''),
+                ),
+              for (final b in lista)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  title: Text(b.nome),
+                  trailing: widget.atual == b.id
+                      ? const Icon(Icons.check_rounded, color: HomefyColors.primary)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(b.id),
+                ),
+              if (lista.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text('Nenhum bairro com esse nome em Caruaru.', style: t.bodySmall),
+                ),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Faixas de preço do serviço (ex.: Carro pequeno / Carro médio / SUV).
+class _TabelaVariacoes extends StatelessWidget {
+  const _TabelaVariacoes({required this.servico, required this.cor});
+  final Servico servico;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: HomefyColors.background,
+        borderRadius: BorderRadius.circular(HomefySpace.radiusMd),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Icon(Icons.payments_outlined, size: 18, color: cor),
+          const SizedBox(width: 6),
+          Text('Preços a partir de', style: t.labelLarge),
+        ]),
+        const SizedBox(height: 6),
+        for (final v in servico.variacoes)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              Expanded(child: Text(v.rotulo, style: t.bodyMedium)),
+              if (Servico.formatarDuracao(v.duracaoMinutos) != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(Servico.formatarDuracao(v.duracaoMinutos)!,
+                      style: t.bodySmall?.copyWith(color: HomefyColors.textMuted)),
+                ),
+              Text(Servico.formatarPreco(v.preco) ?? 'Sob consulta',
+                  style: t.titleSmall?.copyWith(color: HomefyColors.primary)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+/// Convite discreto no fim da vitrine (decisão D1: no lugar de "Outros").
+class _NaoAchou extends StatelessWidget {
+  const _NaoAchou({required this.aoTocar});
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: OutlinedButton.icon(
+        onPressed: aoTocar,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(HomefySpace.radiusMd)),
+        ),
+        icon: const Icon(Icons.lightbulb_outline_rounded),
+        label: Text('Não achou o que precisa? Conte pra gente', style: t.labelLarge),
       ),
     );
   }
