@@ -924,7 +924,7 @@ class _NaoAchou extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(HomefySpace.radiusMd)),
         ),
         icon: const Icon(Icons.lightbulb_outline_rounded),
-        label: Text('Não achou o que precisa? Conte pra gente', style: t.labelLarge),
+        label: Text('Não achou? Conte pra gente', style: t.labelLarge),
       ),
     );
   }

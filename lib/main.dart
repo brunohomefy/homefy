@@ -16,6 +16,10 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.light,
   ));
 
+  // Na demonstração, a acessibilidade fica sempre ligada: leitores de tela
+  // e a auditoria automática de telas encontram os botões pelo texto.
+  if (kModoDemo) SemanticsBinding.instance.ensureSemantics();
+
   if (!kModoDemo) {
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

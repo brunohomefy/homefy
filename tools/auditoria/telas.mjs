@@ -24,8 +24,7 @@ async function foto(nome) {
 
 // Liga a camada de acessibilidade do Flutter, para achar botões pelo texto.
 async function acessibilidade() {
-  const p = page.locator('flt-semantics-placeholder');
-  if (await p.count()) await p.click({ force: true }).catch(() => {});
+  // A demonstração já liga a acessibilidade (ensureSemantics); só espera montar.
   await page.waitForTimeout(600);
 }
 
@@ -35,11 +34,24 @@ async function abrir(rota) {
   await acessibilidade();
 }
 
+// Procura o elemento pelo texto visível ou pelo rótulo de acessibilidade.
 async function tocar(texto, { exato = false } = {}) {
-  const alvo = page.getByText(texto, { exact: exato }).first();
-  await alvo.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
-  await alvo.click({ timeout: 4000 });
-  await page.waitForTimeout(700);
+  const tentativas = [
+    page.getByRole('button', { name: texto, exact: exato }),
+    page.getByRole('checkbox', { name: texto, exact: exato }),
+    page.getByText(texto, { exact: exato }),
+    page.getByLabel(texto, { exact: exato }),
+  ];
+  for (const t of tentativas) {
+    const alvo = t.first();
+    if (await alvo.count()) {
+      await alvo.scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
+      await alvo.click({ timeout: 4000, force: true });
+      await page.waitForTimeout(800);
+      return;
+    }
+  }
+  throw new Error('não achei: ' + texto);
 }
 
 async function rolar(px) {
@@ -64,7 +76,7 @@ await passo('bairro', async () => {
 await passo('detalhe_faixas', async () => { await rolar(500); await tocar('Lavagem completa'); await foto('detalhe_faixas'); });
 await passo('nao_achou', async () => {
   await abrir('/home'); await rolar(3000);
-  await tocar('Não achou o que precisa'); await foto('nao_achou');
+  await tocar('Não achou?'); await foto('nao_achou');
 });
 await passo('oferta', async () => {
   await abrir('/oferecer'); await foto('oferta_1_vazio');
@@ -73,8 +85,8 @@ await passo('oferta', async () => {
   await tocar('Continuar'); await foto('oferta_2_bairros');
   await tocar('Salgado', { exato: true }); await tocar('Kennedy', { exato: true }); await foto('oferta_2_marcado');
   await tocar('Continuar');
-  const campo = page.locator('input').first();
-  await campo.fill('81999991234').catch(() => {});
+  await tocar('WhatsApp').catch(() => {});
+  await page.keyboard.type('81999991234');
   await foto('oferta_3_contato');
   await tocar('Continuar'); await foto('oferta_4_revisao');
   await tocar('Começar a oferecer'); await page.waitForTimeout(1500); await foto('meus_servicos_vazio');
