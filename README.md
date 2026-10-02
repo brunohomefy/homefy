@@ -2,6 +2,10 @@
 
 Serviços domiciliares em Caruaru–PE. Flutter + Firebase (o mesmo projeto Firebase que era usado no FlutterFlow).
 
+## Link para testar
+
+**https://brunohomefy.github.io/homefy/**: atualiza sozinho a cada mudança enviada para a branch `main` (GitHub Actions → GitHub Pages, grátis).
+
 ## O que já funciona
 
 - **Login** com e-mail e senha, "Esqueceu a senha?" (envia e-mail de redefinição) e mensagens de erro em português.
