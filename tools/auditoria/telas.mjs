@@ -59,7 +59,11 @@ async function buscar(rotulo, texto) {
   const campo = page.getByRole('textbox', { name: rotulo }).first();
   if (await campo.count()) await campo.click({ force: true });
   else await tocar(rotulo);
-  await page.keyboard.type(texto, { delay: 30 });
+  await page.waitForTimeout(500);
+  // Ao focar, o Flutter cria um <input>/<textarea> de verdade no DOM: preenche nele.
+  const dom = page.locator('flt-text-editing-host input, flt-text-editing-host textarea, input.flt-text-editing, textarea.flt-text-editing').first();
+  if (await dom.count()) await dom.fill(texto);
+  else await page.keyboard.type(texto, { delay: 30 });
   await page.waitForTimeout(800);
 }
 
@@ -105,6 +109,7 @@ await passo('novo_servico', async () => {
   await tocar('Lavagem simples', { exato: true }); await tocar('Carro médio'); await foto('editor_faixas');
   await rolar(800); await foto('editor_fim');
 });
+await passo('meus_servicos_rota', async () => { await abrir('/meus-servicos'); await foto('meus_servicos_rota'); });
 await passo('conte_experiencia', async () => {
   await abrir('/home'); await tocar('B', { exato: true }).catch(() => {});
   await foto('folha_perfil');
