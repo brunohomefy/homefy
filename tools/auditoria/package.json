@@ -1,0 +1,7 @@
+{
+  "name": "homefy-auditoria-telas",
+  "private": true,
+  "type": "module",
+  "description": "Abre a versão de demonstração num navegador e tira prints das telas principais.",
+  "dependencies": { "playwright": "^1.48.0" }
+}

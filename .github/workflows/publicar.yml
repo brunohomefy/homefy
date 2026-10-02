@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # só para gravar os prints na branch auditoria-telas
   pages: write
   id-token: write
 
@@ -57,6 +57,22 @@ jobs:
           flutter build web --release --dart-define=HOMEFY_DEMO=true \
             --base-href "/${{ github.event.repository.name }}/demo/" --output build/demo
           cp -r build/demo build/web/demo
+
+      # Prints automáticos das telas (versão de demonstração), gravados na branch
+      # auditoria-telas. Não bloqueia a publicação se falhar.
+      - name: Auditoria visual (prints)
+        continue-on-error: true
+        run: |
+          mkdir -p srv/homefy && cp -r build/demo srv/homefy/demo
+          (cd srv && python3 -m http.server 8000 >/dev/null 2>&1 &)
+          cd tools/auditoria && npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+          node telas.mjs http://localhost:8000/homefy/demo/ ../../prints
+          cd ../..
+          git config user.name "auditoria-bot"; git config user.email "actions@github.com"
+          git checkout --orphan auditoria-telas
+          git rm -rfq . ; git clean -fdxq -e prints -e build
+          echo "Prints de ${GITHUB_SHA::7} (${GITHUB_REF_NAME})" > prints/ORIGEM.txt
+          git add prints && git commit -qm "Prints ${GITHUB_SHA::7}" && git push -fq origin auditoria-telas
 
       - uses: actions/upload-pages-artifact@v3
         with:

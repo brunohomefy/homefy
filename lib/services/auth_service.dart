@@ -27,8 +27,9 @@ class AuthService extends ChangeNotifier {
   static final AuthService instance = AuthService._();
 
   StreamSubscription<User?>? _sub;
-  bool _demoLogado = false;
-  String? _demoNome;
+  // Na demonstração já entra logado (usada também na auditoria automática de telas).
+  bool _demoLogado = true;
+  String? _demoNome = 'Bruno';
 
   User? get _user => kModoDemo ? null : FirebaseAuth.instance.currentUser;
 
