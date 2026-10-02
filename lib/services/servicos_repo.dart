@@ -1,18 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../config.dart';
+import '../models/categoria.dart';
 import '../models/servico.dart';
 
 /// Leitura da coleção `servicos`.
 class ServicosRepo {
   const ServicosRepo();
 
-  /// Mesma consulta da Home do FlutterFlow: ativo == true, limite 10.
+  /// Serviços com ativo == true, já ordenados (categoria do MVP, depois preço).
   /// Stream: se alguém editar no console do Firebase, a Home atualiza sozinha.
-  Stream<List<Servico>> ativos({int limite = 10}) {
+  ///
+  /// Limite 50: cada abertura da Home lê até 50 documentos. No plano grátis
+  /// (50 mil leituras/dia) isso dá ~1.000 aberturas por dia. Quando o catálogo
+  /// passar de 50 serviços, trocar por busca filtrada por categoria/bairro.
+  Stream<List<Servico>> ativos({int limite = 50}) {
     if (kModoDemo) {
       return Stream.fromFuture(
-        Future.delayed(const Duration(milliseconds: 900), () => _exemplos),
+        Future.delayed(const Duration(milliseconds: 900), () => ordenar([..._exemplos])),
       );
     }
     return FirebaseFirestore.instance
@@ -20,21 +25,43 @@ class ServicosRepo {
         .where('ativo', isEqualTo: true)
         .limit(limite)
         .snapshots()
-        .map((snap) => snap.docs.map(Servico.fromFirestore).toList());
+        .map((snap) => ordenar(snap.docs.map(Servico.fromFirestore).toList()));
   }
 
-  static final _nomes = <String, Future<String?>>{};
+  /// Ordem da vitrine: categorias na ordem do MVP, depois menor preço.
+  /// Serviço sem preço vai para o fim da sua categoria.
+  static List<Servico> ordenar(List<Servico> lista) {
+    int ordemCat(Servico s) {
+      final c = Categoria.deServico(s.categoria);
+      return c == null ? Categoria.todas.length : Categoria.todas.indexOf(c);
+    }
 
-  /// Nome do profissional dono do serviço (campo `nome` em `usuarios`).
+    lista.sort((a, b) {
+      final c = ordemCat(a).compareTo(ordemCat(b));
+      if (c != 0) return c;
+      return (a.precoBase ?? double.infinity).compareTo(b.precoBase ?? double.infinity);
+    });
+    return lista;
+  }
+
+  static final _perfis = <String, Future<PerfilProfissional?>>{};
+
+  /// Nome e descrição do profissional dono do serviço (documento em `usuarios`).
   /// Guarda em memória para não buscar o mesmo profissional várias vezes.
-  Future<String?> nomeDoProfissional(DocumentReference<Map<String, dynamic>> ref) {
-    return _nomes.putIfAbsent(ref.path, () async {
+  Future<PerfilProfissional?> perfilDoProfissional(
+      DocumentReference<Map<String, dynamic>> ref) {
+    return _perfis.putIfAbsent(ref.path, () async {
       try {
-        final doc = await ref.get();
-        final nome = doc.data()?['nome'];
-        return nome is String && nome.trim().isNotEmpty ? nome.trim() : null;
+        final d = (await ref.get()).data();
+        final nome = d?['nome'];
+        if (nome is! String || nome.trim().isEmpty) return null;
+        final desc = d?['descricao'];
+        return PerfilProfissional(
+          nome: nome.trim(),
+          descricao: desc is String ? desc.trim() : '',
+        );
       } catch (_) {
-        _nomes.remove(ref.path); // tenta de novo na próxima vez
+        _perfis.remove(ref.path); // tenta de novo na próxima vez
         return null;
       }
     });
@@ -83,4 +110,11 @@ class ServicosRepo {
       'ativo': true,
     }),
   ];
+}
+
+/// Parte pública do perfil do profissional mostrada ao cliente.
+class PerfilProfissional {
+  const PerfilProfissional({required this.nome, required this.descricao});
+  final String nome;
+  final String descricao;
 }

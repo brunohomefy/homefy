@@ -12,6 +12,7 @@ class Categoria {
     required this.icone,
     required this.cor,
     required this.palavrasChave,
+    this.sinonimos = const [],
   });
 
   final String id;
@@ -20,9 +21,22 @@ class Categoria {
   final Color cor;
   final List<String> palavrasChave;
 
+  /// Palavras que o cliente pode digitar na busca (sem acento).
+  final List<String> sinonimos;
+
   bool combinaCom(String categoriaDoServico) {
     final alvo = normalizar(categoriaDoServico);
     return palavrasChave.any(alvo.contains);
+  }
+
+  /// Busca digitada pelo cliente (já normalizada) bate com esta categoria?
+  /// Aceita palavra começada (ex.: "manic") e sinônimos (ex.: "unha").
+  bool combinaComBusca(String termo) {
+    if (termo.length < 3) return false;
+    final palavras = termo.split(RegExp(r'\s+'));
+    return palavras.any((p) =>
+        p.length >= 3 &&
+        [...palavrasChave, ...sinonimos].any((k) => k.startsWith(p) || p.startsWith(k)));
   }
 
   static Categoria? deServico(String categoriaDoServico) {
@@ -39,6 +53,7 @@ class Categoria {
       icone: Icons.content_cut_rounded,
       cor: Color(0xFF2D6A4F),
       palavrasChave: ['cabel', 'barb', 'corte'],
+      sinonimos: ['cabelo', 'barba', 'barbeiro', 'cabeleireiro', 'escova', 'pezinho'],
     ),
     Categoria(
       id: 'manicure',
@@ -46,6 +61,7 @@ class Categoria {
       icone: Icons.back_hand_outlined,
       cor: Color(0xFFC0567A),
       palavrasChave: ['manicure', 'pedicure', 'unha'],
+      sinonimos: ['unhas', 'esmalte', 'esmaltacao', 'alongamento', 'cuticula'],
     ),
     Categoria(
       id: 'veiculos',
@@ -53,6 +69,7 @@ class Categoria {
       icone: Icons.local_car_wash_rounded,
       cor: Color(0xFF0077B6),
       palavrasChave: ['lava', 'veicul', 'carro', 'moto'],
+      sinonimos: ['lavagem', 'lavajato', 'automovel', 'automotiva', 'polimento'],
     ),
     Categoria(
       id: 'limpeza',
@@ -60,6 +77,7 @@ class Categoria {
       icone: Icons.cleaning_services_rounded,
       cor: Color(0xFFB7791F),
       palavrasChave: ['limpeza', 'faxin', 'diarista'],
+      sinonimos: ['faxina', 'faxineira', 'casa', 'passar', 'roupa', 'passadoria', 'obra'],
     ),
   ];
 }

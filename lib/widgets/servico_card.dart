@@ -190,10 +190,10 @@ class NomeProfissional extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    return FutureBuilder<String?>(
-      future: const ServicosRepo().nomeDoProfissional(servico.profissionalRef!),
+    return FutureBuilder<PerfilProfissional?>(
+      future: const ServicosRepo().perfilDoProfissional(servico.profissionalRef!),
       builder: (context, snap) {
-        final nome = snap.data;
+        final nome = snap.data?.nome;
         if (nome == null) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -208,6 +208,37 @@ class NomeProfissional extends StatelessWidget {
                   style: (grande ? t.bodyMedium : t.bodySmall)
                       ?.copyWith(color: HomefyColors.textSecondary)),
             ),
+          ]),
+        );
+      },
+    );
+  }
+}
+
+/// Bloco "Sobre o profissional" do detalhe do serviço.
+class SobreProfissional extends StatelessWidget {
+  const SobreProfissional({super.key, required this.servico});
+  final Servico servico;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return FutureBuilder<PerfilProfissional?>(
+      future: const ServicosRepo().perfilDoProfissional(servico.profissionalRef!),
+      builder: (context, snap) {
+        final p = snap.data;
+        if (p == null || p.descricao.isEmpty) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: HomefyColors.background,
+            borderRadius: BorderRadius.circular(HomefySpace.radiusMd),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Sobre ${p.nome.split(' ').first}', style: t.labelLarge),
+            const SizedBox(height: 4),
+            Text(p.descricao, style: t.bodyMedium?.copyWith(height: 1.4)),
           ]),
         );
       },

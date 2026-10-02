@@ -37,7 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return todos.where((s) {
       if (_categoria != null && !_categoria!.combinaCom(s.categoria)) return false;
       if (termo.isEmpty) return true;
-      return normalizar('${s.nome} ${s.categoria} ${s.descricao}').contains(termo);
+      if (normalizar('${s.nome} ${s.categoria} ${s.descricao}').contains(termo)) {
+        return true;
+      }
+      // Sinônimos: "unha" acha Manicure, "carro" acha Lavagem, "diarista" acha Limpeza.
+      final cat = Categoria.deServico(s.categoria);
+      return cat != null && cat.combinaComBusca(termo);
     }).toList();
   }
 
@@ -542,6 +547,7 @@ class _DetalheServico extends StatelessWidget {
               const SizedBox(height: 18),
               Text(servico.descricao, style: t.bodyLarge?.copyWith(height: 1.45)),
             ],
+            if (servico.profissionalRef != null) SobreProfissional(servico: servico),
             const SizedBox(height: 20),
             Row(children: [
               info(Icons.payments_outlined, 'A partir de',
