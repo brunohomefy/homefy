@@ -35,13 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Servico> _filtrar(List<Servico> todos) {
     final termo = normalizar(_busca.text.trim());
     return todos.where((s) {
-      if (_categoria != null && !_categoria!.combinaCom(s.categoria)) return false;
+      if (_categoria != null && s.categoriaMvp?.id != _categoria!.id) return false;
       if (termo.isEmpty) return true;
-      if (normalizar('${s.nome} ${s.categoria} ${s.descricao}').contains(termo)) {
+      if (normalizar('${s.nome} ${s.categoria} ${s.subtipoRotulo ?? ''} ${s.descricao}').contains(termo)) {
         return true;
       }
       // Sinônimos: "unha" acha Manicure, "carro" acha Lavagem, "diarista" acha Limpeza.
-      final cat = Categoria.deServico(s.categoria);
+      final cat = s.categoriaMvp;
       return cat != null && cat.combinaComBusca(termo);
     }).toList();
   }
@@ -502,7 +502,7 @@ class _DetalheServico extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    final cat = Categoria.deServico(servico.categoria);
+    final cat = servico.categoriaMvp;
     final cor = cat?.cor ?? HomefyColors.primary;
 
     Widget info(IconData i, String rotulo, String valor) => Expanded(
@@ -535,8 +535,8 @@ class _DetalheServico extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(servico.nome, style: t.titleLarge),
-                  if (servico.categoria.isNotEmpty)
-                    Text(servico.categoria,
+                  if (servico.categoriaRotulo.isNotEmpty)
+                    Text(servico.categoriaRotulo,
                         style: t.bodyMedium?.copyWith(color: cor, fontWeight: FontWeight.w600)),
                   if (servico.profissionalRef != null)
                     NomeProfissional(servico: servico, grande: true),

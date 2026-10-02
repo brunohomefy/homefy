@@ -18,7 +18,7 @@ class ServicoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    final cat = Categoria.deServico(servico.categoria);
+    final cat = servico.categoriaMvp;
     final cor = cat?.cor ?? HomefyColors.primary;
 
     return Container(
@@ -48,7 +48,7 @@ class ServicoCard extends StatelessWidget {
                           style: t.titleMedium),
                       const SizedBox(height: 4),
                       Text(
-                        servico.categoria.isEmpty ? 'Serviço' : servico.categoria,
+                        servico.categoriaRotulo.isEmpty ? 'Serviço' : servico.categoriaRotulo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: t.bodySmall?.copyWith(color: cor, fontWeight: FontWeight.w600),

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config.dart';
+import 'perfil_repo.dart';
 
 /// Erro já traduzido para mostrar ao usuário.
 class AuthFalha implements Exception {
@@ -55,6 +56,8 @@ class AuthService extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       throw AuthFalha(_traduzir(e.code));
     }
+    // Contas antigas: tira o e-mail do perfil público e cria o perfil se faltar.
+    unawaited(PerfilRepo.instance.arrumarPerfil());
   }
 
   /// Cria a conta no Authentication e o documento `usuarios/{uid}`.
@@ -84,7 +87,8 @@ class AuthService extends ChangeNotifier {
     try {
       await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).set({
         'nome': nome.trim(),
-        'email': user.email,
+        // Sem e-mail aqui: o perfil é público entre usuários logados e o
+        // e-mail já fica guardado no Firebase Authentication (LGPD).
         'auth_uid': user.uid, // mesmo campo do documento de teste já existente
         'cidade': 'caruaru',
         'eh_profissional': false,

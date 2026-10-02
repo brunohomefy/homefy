@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:homefy/models/bairros.dart';
 import 'package:homefy/models/categoria.dart';
+import 'package:homefy/models/perfil.dart';
 import 'package:homefy/models/servico.dart';
 import 'package:homefy/services/servicos_repo.dart';
 
@@ -57,6 +59,83 @@ void main() {
         Servico.fromMap('d', {'nome_servico': 'Barba', 'categoria': 'Barbeiro(a)', 'preco_base': 20}),
       ]);
       expect(l.map((s) => s.id).toList(), ['d', 'c', 'a', 'b']);
+    });
+  });
+
+  group('Catálogo fixo (D1)', () {
+    test('ids de categoria e subtipo são únicos', () {
+      final cats = Categoria.todas.map((c) => c.id).toList();
+      expect(cats.toSet().length, cats.length);
+      final subs = Categoria.todas.expand((c) => c.subtipos).map((s) => s.id).toList();
+      expect(subs.toSet().length, subs.length);
+      for (final c in Categoria.todas) {
+        expect(c.subtipos, isNotEmpty, reason: c.id);
+      }
+    });
+
+    test('ids das categorias batem com as regras do Firestore', () {
+      expect(Categoria.todas.map((c) => c.id), ['cabelo', 'manicure', 'veiculos', 'limpeza']);
+    });
+
+    test('bairros: ids únicos e sem acento', () {
+      final ids = Bairro.todos.map((b) => b.id).toList();
+      expect(ids.toSet().length, ids.length);
+      expect(Bairro.idDe('Maurício de Nassau'), 'mauricio_de_nassau');
+      expect(Bairro.nomeDe('sao_joao_da_escocia'), 'São João da Escócia');
+      expect(ids.every((i) => RegExp(r'^[a-z0-9_]+$').hasMatch(i)), isTrue);
+    });
+  });
+
+  group('Serviço com variações (D2)', () {
+    test('categoria fixa vence o texto livre e unifica etiquetas', () {
+      final novo = Servico.fromMap('n', {'categoria': 'qualquer', 'categoria_id': 'veiculos'});
+      final antigo = Servico.fromMap('a', {'categoria': 'Lava-jato'});
+      expect(novo.categoriaRotulo, 'Lavagem de veículos');
+      expect(antigo.categoriaRotulo, 'Lavagem de veículos');
+    });
+
+    test('lê variações e filtra por bairro', () {
+      final s = Servico.fromMap('x', {
+        'categoria_id': 'limpeza',
+        'subtipo': 'pos_obra',
+        'variacoes': [
+          {'rotulo': '1 quarto', 'preco': 150, 'duracao_minutos': 240},
+          {'rotulo': '3 quartos ou mais', 'preco': null},
+        ],
+        'bairros': ['salgado', 'universitario'],
+      });
+      expect(s.variacoes.length, 2);
+      expect(s.variacoes.last.preco, isNull);
+      expect(s.temVariacoes, isTrue);
+      expect(s.subtipoRotulo, 'Limpeza pós-obra');
+      expect(s.atende('salgado'), isTrue);
+      expect(s.atende('centro'), isFalse);
+      expect(Servico.fromMap('t', {'atende_toda_cidade': true}).atende('centro'), isTrue);
+    });
+
+    test('serviço antigo vira variação Padrão', () {
+      final s = Servico.fromMap('x', {'preco_base': 25, 'duracao_minutos': 40});
+      expect(s.variacoesOuPadrao.single.rotulo, 'Padrão');
+      expect(s.variacoesOuPadrao.single.preco, 25);
+    });
+  });
+
+  group('WhatsApp', () {
+    test('normaliza formatos comuns', () {
+      expect(normalizarWhatsapp('(81) 99999-1234'), '5581999991234');
+      expect(normalizarWhatsapp('+55 81 99999-1234'), '5581999991234');
+      expect(normalizarWhatsapp('081999991234'), '5581999991234');
+      expect(normalizarWhatsapp('81 3721-1234'), '558137211234');
+    });
+
+    test('recusa números inválidos', () {
+      expect(normalizarWhatsapp('99999-1234'), isNull);
+      expect(normalizarWhatsapp('(81) 89999-1234'), isNull);
+      expect(normalizarWhatsapp('123'), isNull);
+    });
+
+    test('formata para mostrar', () {
+      expect(formatarWhatsapp('5581999991234'), '(81) 99999-1234');
     });
   });
 }

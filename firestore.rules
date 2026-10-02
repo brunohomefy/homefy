@@ -1,44 +1,157 @@
 rules_version = '2';
 
-// Regras do Firestore do Homefy (fase de testes).
-// Publicar com:  firebase deploy --only firestore:rules
-// ou colando este conteúdo em Firebase Console → Firestore → Regras → Publicar.
+// Regras do Firestore do Homefy (fase de testes, piloto em Caruaru).
+// Publicar colando este conteúdo em Firebase Console → Firestore → Regras → Publicar
+// (ou: firebase deploy --only firestore:rules).
+// Testadas automaticamente no GitHub Actions (pasta tests_regras/).
+//
+// Princípio (LGPD): só fica legível para outros usuários o que precisa ser
+// público. E-mail e WhatsApp nunca ficam no perfil público.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Catálogo de serviços: qualquer pessoa logada lê.
-    // Criação/edição só pelo console do Firebase, por enquanto.
-    match /servicos/{id} {
-      allow read: if request.auth != null;
-      allow write: if false;
+    function logado() {
+      return request.auth != null;
     }
 
-    // Perfil do usuário. Documentos novos usam o Auth UID como ID
-    // (dossiê, item 42) e repetem o UID no campo auth_uid.
-    match /usuarios/{uid} {
-      // Fase de testes: quem está logado pode ler perfis, para a Home
-      // mostrar o nome do profissional de cada serviço.
-      // ATENÇÃO: isso inclui e-mail e telefone. Antes do lançamento,
-      // separar os dados públicos dos privados.
-      allow read: if request.auth != null;
+    function eDono(uid) {
+      return logado() && request.auth.uid == uid;
+    }
 
-      allow create: if request.auth != null
-        && request.auth.uid == uid
+    function caminhoUsuario(uid) {
+      return /databases/$(database)/documents/usuarios/$(uid);
+    }
+
+    function textoAte(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    function listaAte(v, max) {
+      return v is list && v.size() <= max;
+    }
+
+    // ───────────── Perfil público ─────────────
+    // Documentos novos usam o Auth UID como ID (dossiê, item 42).
+    match /usuarios/{uid} {
+      // Quem está logado lê perfis: nome, descrição, categorias e bairros
+      // do profissional aparecem para o cliente.
+      allow read: if logado();
+
+      allow create: if eDono(uid)
         && request.resource.data.keys().hasOnly(
-             ['nome', 'email', 'auth_uid', 'cidade', 'eh_profissional', 'criado_em'])
+             ['nome', 'auth_uid', 'cidade', 'eh_profissional', 'criado_em'])
         && request.resource.data.auth_uid == uid
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 3
+        && request.resource.data.nome.size() <= 80
         && request.resource.data.eh_profissional == false;
 
-      // A pessoa só pode trocar o próprio nome por aqui. Virar profissional,
-      // nota, destaque etc. vão ganhar fluxo próprio depois.
-      allow update: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome']);
+      // A pessoa altera só o próprio perfil e só estes campos.
+      // Apagar o campo 'email' antigo também é permitido (limpeza LGPD).
+      allow update: if eDono(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             'nome', 'email', 'eh_profissional', 'categorias', 'subtipos',
+             'bairros', 'atende_toda_cidade', 'descricao',
+             'profissional_desde', 'atualizado_em'])
+        && !('email' in request.resource.data)
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 3
+        && request.resource.data.nome.size() <= 80
+        && request.resource.data.get('eh_profissional', false) is bool
+        && (request.resource.data.get('eh_profissional', false) == false
+            || perfilProfissionalValido(uid));
 
       allow delete: if false;
+
+      // Profissional precisa de categoria, área de atendimento e WhatsApp.
+      // existsAfter/getAfter: o WhatsApp é gravado no mesmo lote (batch).
+      function perfilProfissionalValido(uid) {
+        let d = request.resource.data;
+        let contato = /databases/$(database)/documents/usuarios/$(uid)/privado/contato;
+        return listaAte(d.get('categorias', null), 4) && d.categorias.size() >= 1
+          && listaAte(d.get('subtipos', []), 30)
+          && listaAte(d.get('bairros', []), 60)
+          && d.get('atende_toda_cidade', false) is bool
+          && (d.get('atende_toda_cidade', false) == true || d.get('bairros', []).size() >= 1)
+          && textoAte(d.get('descricao', ''), 500)
+          && existsAfter(contato)
+          && getAfter(contato).data.get('whatsapp', '').matches('55[0-9]{10,11}');
+      }
+
+      // ───────────── Dados privados ─────────────
+      // Só o dono lê e grava. Quando existirem pedidos, o cliente com pedido
+      // aceito vai poder ver o WhatsApp (decisão D3). Ainda não.
+      match /privado/contato {
+        allow read: if eDono(uid);
+        allow create, update: if eDono(uid)
+          && request.resource.data.keys().hasOnly(['whatsapp', 'atualizado_em'])
+          && request.resource.data.whatsapp is string
+          && request.resource.data.whatsapp.matches('55[0-9]{10,11}');
+        allow delete: if false;
+      }
+    }
+
+    // ───────────── Catálogo de serviços ─────────────
+    match /servicos/{id} {
+      allow read: if logado();
+
+      // Só profissional cria, e sempre em nome de si mesmo.
+      allow create: if logado()
+        && request.resource.data.get('profissional_ref', null) == caminhoUsuario(request.auth.uid)
+        && get(caminhoUsuario(request.auth.uid)).data.get('eh_profissional', false) == true
+        && servicoValido(request.resource.data);
+
+      // Só o dono edita, e não pode passar o serviço para outra pessoa.
+      allow update: if logado()
+        && resource.data.get('profissional_ref', null) == caminhoUsuario(request.auth.uid)
+        && request.resource.data.get('profissional_ref', null) == resource.data.profissional_ref
+        && servicoValido(request.resource.data);
+
+      // Não se apaga: desativa (ativo = false). Preserva o histórico.
+      allow delete: if false;
+
+      function servicoValido(d) {
+        let preco = d.get('preco_base', null);
+        let duracao = d.get('duracao_minutos', null);
+        let subtipo = d.get('subtipo', null);
+        return d.keys().hasOnly([
+                 'nome_servico', 'categoria', 'categoria_id', 'subtipo', 'descricao',
+                 'variacoes', 'preco_base', 'duracao_minutos', 'bairros',
+                 'atende_toda_cidade', 'ativo', 'profissional_ref',
+                 'criado_em', 'atualizado_em'])
+          && d.get('nome_servico', '') is string
+          && d.nome_servico.size() >= 3 && d.nome_servico.size() <= 60
+          && d.get('categoria_id', '') in ['cabelo', 'manicure', 'veiculos', 'limpeza']
+          && textoAte(d.get('categoria', ''), 40)
+          && (subtipo == null || textoAte(subtipo, 40))
+          && textoAte(d.get('descricao', ''), 500)
+          && listaAte(d.get('variacoes', null), 6) && d.variacoes.size() >= 1
+          && (preco == null || (preco is number && preco >= 0 && preco <= 100000))
+          && (duracao == null || (duracao is int && duracao > 0 && duracao <= 1440))
+          && listaAte(d.get('bairros', []), 60)
+          && d.get('atende_toda_cidade', false) is bool
+          && d.get('ativo', null) is bool;
+      }
+    }
+
+    // ───────────── Feedbacks ─────────────
+    // "Não achou o que precisa?" e "Conte sua experiência".
+    // Qualquer pessoa logada envia; ninguém lê pelo app (o Bruno lê no console).
+    match /feedbacks/{id} {
+      allow create: if logado()
+        && request.resource.data.keys().hasOnly(
+             ['autor_uid', 'tipo', 'texto', 'categoria_id', 'busca', 'bairro', 'criado_em'])
+        && request.resource.data.get('autor_uid', '') == request.auth.uid
+        && request.resource.data.get('tipo', '') in ['nao_achei', 'experiencia']
+        && request.resource.data.get('texto', null) is string
+        && request.resource.data.texto.size() >= 3
+        && request.resource.data.texto.size() <= 1000
+        && textoAte(request.resource.data.get('categoria_id', ''), 20)
+        && textoAte(request.resource.data.get('busca', ''), 100)
+        && textoAte(request.resource.data.get('bairro', ''), 60)
+        && request.resource.data.get('criado_em', null) == request.time;
+      allow read, update, delete: if false;
     }
 
     // Todo o resto fica fechado até ser desenhado.

@@ -32,7 +32,7 @@ class ServicosRepo {
   /// Serviço sem preço vai para o fim da sua categoria.
   static List<Servico> ordenar(List<Servico> lista) {
     int ordemCat(Servico s) {
-      final c = Categoria.deServico(s.categoria);
+      final c = s.categoriaMvp;
       return c == null ? Categoria.todas.length : Categoria.todas.indexOf(c);
     }
 

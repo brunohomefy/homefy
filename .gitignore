@@ -3,3 +3,5 @@ build/
 .flutter-plugins*
 .idea/
 *.iml
+tests_regras/node_modules/
+*.log
