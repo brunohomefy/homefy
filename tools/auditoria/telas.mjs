@@ -93,8 +93,7 @@ await passo('oferta', async () => {
   await tocar('Continuar'); await foto('oferta_1_erro');
   await tocar('Lavagem de veículos'); await tocar('Lavagem simples'); await foto('oferta_1_marcado');
   await tocar('Continuar'); await foto('oferta_2_bairros');
-  await buscar('Procurar bairro', 'salga'); await tocar('Salgado', { exato: true });
-  await foto('oferta_2_marcado');
+  await tocar('Atendo Caruaru toda'); await foto('oferta_2_toda_cidade');
   await tocar('Continuar');
   await buscar('WhatsApp', '81999991234');
   await foto('oferta_3_contato');
