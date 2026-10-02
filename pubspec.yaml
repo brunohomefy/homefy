@@ -1,0 +1,32 @@
+name: homefy
+description: "Homefy — serviços domiciliares em Caruaru-PE."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Firebase (mesmo projeto já existente do FlutterFlow)
+  firebase_core: ">=3.6.0 <6.0.0"
+  firebase_auth: ">=5.3.0 <8.0.0"
+  cloud_firestore: ">=5.4.0 <8.0.0"
+
+  # Navegação, fontes e formatação
+  go_router: ">=14.0.0 <18.0.0"
+  google_fonts: ">=6.2.0 <8.0.0"
+  intl: any   # versão definida pelo flutter_localizations
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ">=4.0.0 <7.0.0"
+
+flutter:
+  uses-material-design: true
