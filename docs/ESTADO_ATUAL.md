@@ -69,16 +69,18 @@ Há **dados de teste** marcados com `teste: true` e IDs começando com `teste_`:
 
 ---
 
-## 4. Próxima camada: CADASTRO DE PROFISSIONAL
+## 4. Camada concluída: CADASTRO DE PROFISSIONAL (02/10/2026)
 
-Escopo proposto (confirmar com o Bruno no início):
-1. "Quero oferecer" abre o fluxo de virar profissional, na mesma conta.
-2. Escolher a(s) categoria(s) e os subtipos a partir da lista fixa (D1).
-3. Bairros atendidos, numa lista fixa de bairros de Caruaru (dossiê 65.6).
-4. WhatsApp (privado; só aparece depois do pedido, D3) e descrição curta.
-5. Cadastrar serviços: nome, subtipo, variações com preço e duração (D2).
-6. Os serviços aparecem na Home. Na Home, o cliente pode filtrar pelo seu bairro.
-7. Regras do Firestore: o profissional só cria e edita os **próprios** serviços. `eh_profissional` só muda por esse fluxo.
-8. Testar com contas de teste e escrever o Relatório de Testes 02.
+Ver `docs/RELATORIO_TESTES_02.md`. O que foi entregue:
+- **Catálogo fixo:** subtipos e portes; 45 bairros revisados pelo Bruno.
+- **Quero oferecer** (4 passos) e **Meus serviços**, com editor de faixas de preço.
+- **Home:** filtro temporário por bairro, faixas de preço no detalhe, "Não achou? Conte pra gente" e "Conte sua experiência" (coleção `feedbacks`).
+- **LGPD:** e-mail fora do perfil público; WhatsApp em `usuarios/{uid}/privado/contato`.
+- **Regras novas** (23 testes no emulador).
+- **CI:** testa em toda branch e publica só da `main`. Demonstração em `/demo/`. Prints automáticos na branch `auditoria-telas`.
 
-Fora desta camada: solicitação/agenda, avaliações e fotos.
+Pendências do Bruno: publicar as regras, rodar `tools/atualizar_dados_v2.sh` e fazer o teste manual (seção 4 do relatório 02).
+
+## 5. Próxima camada sugerida: SOLICITAÇÃO DE ATENDIMENTO
+
+Pedido com detalhes → profissional responde com valor final → cliente aprova → WhatsApp liberado (D3). Usar transação para não confirmar dois atendimentos no mesmo horário (dossiê 65.5). Confirmar o escopo com o Bruno antes.
