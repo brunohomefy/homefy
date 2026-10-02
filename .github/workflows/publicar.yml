@@ -50,6 +50,14 @@ jobs:
       - name: Compilar
         run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
 
+      # Versão de demonstração (dados de exemplo, sem Firebase, entra sem senha)
+      # em /demo/: serve para ver o visual e para a auditoria das telas.
+      - name: Compilar demonstração
+        run: |
+          flutter build web --release --dart-define=HOMEFY_DEMO=true \
+            --base-href "/${{ github.event.repository.name }}/demo/" --output build/demo
+          cp -r build/demo build/web/demo
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

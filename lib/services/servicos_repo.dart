@@ -191,6 +191,9 @@ class ServicosRepo {
     Servico.fromMap('d1', {
       'nome_servico': 'Corte Masculino',
       'categoria': 'Cabeleireiro(a)',
+      'categoria_id': 'cabelo',
+      'subtipo': 'corte_masculino',
+      'bairros': ['salgado', 'universitario', 'mauricio_de_nassau'],
       'descricao': 'Corte com máquina e tesoura, acabamento na navalha.',
       'preco_base': 25.0,
       'duracao_minutos': 40,
@@ -199,6 +202,9 @@ class ServicosRepo {
     Servico.fromMap('d2', {
       'nome_servico': 'Corte + Barba',
       'categoria': 'Barbeiro(a)',
+      'categoria_id': 'cabelo',
+      'subtipo': 'barba',
+      'bairros': ['universitario'],
       'descricao': 'Corte completo e barba com toalha quente.',
       'preco_base': 40.0,
       'duracao_minutos': 60,
@@ -207,6 +213,9 @@ class ServicosRepo {
     Servico.fromMap('d3', {
       'nome_servico': 'Mão e pé',
       'categoria': 'Manicure',
+      'categoria_id': 'manicure',
+      'subtipo': 'mao_pe',
+      'bairros': ['salgado', 'petropolis'],
       'descricao': 'Cutilagem, esmaltação e hidratação.',
       'preco_base': 45.0,
       'duracao_minutos': 90,
@@ -215,6 +224,14 @@ class ServicosRepo {
     Servico.fromMap('d4', {
       'nome_servico': 'Lavagem completa',
       'categoria': 'Lavagem de veículos',
+      'categoria_id': 'veiculos',
+      'subtipo': 'lavagem_completa',
+      'atende_toda_cidade': true,
+      'variacoes': [
+        {'rotulo': 'Carro pequeno', 'preco': 60.0, 'duracao_minutos': 75},
+        {'rotulo': 'Carro médio', 'preco': 70.0, 'duracao_minutos': 90},
+        {'rotulo': 'SUV ou picape', 'preco': 90.0, 'duracao_minutos': 110},
+      ],
       'descricao': 'Lavagem externa e interna no seu endereço.',
       'preco_base': 60.0,
       'duracao_minutos': 75,
@@ -223,6 +240,9 @@ class ServicosRepo {
     Servico.fromMap('d5', {
       'nome_servico': 'Faxina residencial',
       'categoria': 'Limpeza',
+      'categoria_id': 'limpeza',
+      'subtipo': 'faxina_residencial',
+      'bairros': ['salgado', 'kennedy', 'vila_do_aeroporto'],
       'descricao': 'Limpeza geral de casa ou apartamento.',
       'preco_base': 150.0,
       'duracao_minutos': 240,
