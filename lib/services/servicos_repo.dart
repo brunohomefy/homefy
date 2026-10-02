@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../config.dart';
 import '../models/categoria.dart';
@@ -43,6 +46,122 @@ class ServicosRepo {
     });
     return lista;
   }
+
+  // ───────────── Serviços do próprio profissional ─────────────
+
+  static final _demoMeus = <Servico>[];
+  static final _demoMudou = StreamController<void>.broadcast();
+
+  DocumentReference<Map<String, dynamic>>? get _minhaRef {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return uid == null ? null : FirebaseFirestore.instance.collection('usuarios').doc(uid);
+  }
+
+  /// Todos os serviços do usuário logado (ativos e desativados).
+  /// Sem orderBy na consulta para não precisar de índice composto:
+  /// a ordenação (ativos primeiro, depois categoria e preço) é feita aqui.
+  Stream<List<Servico>> meus() {
+    List<Servico> ordenarMeus(List<Servico> l) {
+      final ativos = ordenar(l.where((s) => s.ativo).toList());
+      final inativos = ordenar(l.where((s) => !s.ativo).toList());
+      return [...ativos, ...inativos];
+    }
+
+    if (kModoDemo) {
+      Stream<List<Servico>> demo() async* {
+        yield ordenarMeus(List.of(_demoMeus));
+        await for (final _ in _demoMudou.stream) {
+          yield ordenarMeus(List.of(_demoMeus));
+        }
+      }
+
+      return demo();
+    }
+    final ref = _minhaRef;
+    if (ref == null) return Stream.value(const []);
+    return FirebaseFirestore.instance
+        .collection('servicos')
+        .where('profissional_ref', isEqualTo: ref)
+        .snapshots()
+        .map((snap) => ordenarMeus(snap.docs.map(Servico.fromFirestore).toList()));
+  }
+
+  /// Cria (id nulo) ou atualiza um serviço do próprio profissional.
+  Future<void> salvar({
+    String? id,
+    required String nome,
+    required Categoria categoria,
+    required String? subtipo,
+    required String descricao,
+    required List<Variacao> variacoes,
+    required List<String> bairros,
+    required bool atendeTodaCidade,
+    required bool ativo,
+  }) async {
+    if (kModoDemo) {
+      final novo = Servico.fromMap(id ?? 'demo${_demoMeus.length + 1}', {
+        'nome_servico': nome,
+        'categoria': categoria.rotulo,
+        'categoria_id': categoria.id,
+        'subtipo': subtipo,
+        'descricao': descricao,
+        'variacoes': variacoes.map((v) => v.toMap()).toList(),
+        'preco_base': (variacoes.map((v) => v.preco).whereType<double>().toList()..sort()).firstOrNull,
+        'duracao_minutos': variacoes.first.duracaoMinutos,
+        'ativo': ativo,
+      });
+      _demoMeus.removeWhere((s) => s.id == novo.id);
+      _demoMeus.add(novo);
+      _demoMudou.add(null);
+      return;
+    }
+    final ref = _minhaRef;
+    if (ref == null) throw StateError('Sem usuário logado');
+    final dados = Servico.dadosParaGravar(
+      nome: nome,
+      categoria: categoria,
+      subtipo: subtipo,
+      descricao: descricao,
+      variacoes: variacoes,
+      bairros: atendeTodaCidade ? const [] : bairros,
+      atendeTodaCidade: atendeTodaCidade,
+      ativo: ativo,
+      profissionalRef: ref,
+    );
+    final col = FirebaseFirestore.instance.collection('servicos');
+    if (id == null) {
+      await col.add({...dados, 'criado_em': FieldValue.serverTimestamp()});
+    } else {
+      await col.doc(id).update(dados);
+    }
+  }
+
+  /// Liga/desliga o serviço na vitrine (não apaga: preserva o histórico).
+  Future<void> definirAtivo(String id, bool ativo) async {
+    if (kModoDemo) {
+      final i = _demoMeus.indexWhere((s) => s.id == id);
+      if (i >= 0) {
+        final s = _demoMeus[i];
+        _demoMeus[i] = Servico.fromMap(s.id, {
+          'nome_servico': s.nome,
+          'categoria_id': s.categoriaId,
+          'subtipo': s.subtipo,
+          'descricao': s.descricao,
+          'variacoes': s.variacoes.map((v) => v.toMap()).toList(),
+          'preco_base': s.precoBase,
+          'ativo': ativo,
+        });
+        _demoMudou.add(null);
+      }
+      return;
+    }
+    await FirebaseFirestore.instance.collection('servicos').doc(id).update({
+      'ativo': ativo,
+      'atualizado_em': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ───────────── Perfil do profissional na vitrine ─────────────
 
   static final _perfis = <String, Future<PerfilProfissional?>>{};
 

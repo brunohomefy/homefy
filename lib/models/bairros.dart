@@ -3,7 +3,7 @@ import 'categoria.dart' show normalizar;
 /// Bairros de Caruaru (lista fixa, dossiê 65.6).
 ///
 /// Fonte inicial: lista de bairros por CEP (Correios), conferida em 02/10/2026.
-/// PRECISA DA REVISÃO DO BRUNO antes do piloto.
+/// Revisada pelo Bruno em 02/10/2026 (acrescentou Vila do Aeroporto e Xique-Xique).
 ///
 /// O banco grava o `id` (sem acento, com _), e não o nome. Assim, corrigir
 /// a grafia de um bairro aqui não quebra os cadastros antigos.
@@ -68,6 +68,8 @@ class Bairro {
     Bairro('Universitário'),
     Bairro('Vassoural'),
     Bairro('Verde'),
+    Bairro('Vila do Aeroporto'), // perto do Distrito Industrial e do Kennedy (informado pelo Bruno)
+    Bairro('Xique-Xique'), // conjunto habitacional recente (informado pelo Bruno)
     Bairro('Zona rural'),
   ];
 }
