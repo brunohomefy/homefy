@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/categoria.dart';
 import '../models/servico.dart';
 import '../services/servicos_repo.dart';
 import '../theme/homefy_theme.dart';
