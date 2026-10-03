@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:homefy/models/avaliacao.dart';
 import 'package:homefy/models/bairros.dart';
 import 'package:homefy/models/categoria.dart';
 import 'package:homefy/models/perfil.dart';
@@ -180,6 +181,27 @@ void main() {
       expect(u.host, 'wa.me');
       expect(u.path, '/5581999991234');
       expect(u.queryParameters['text'], 'Olá!');
+    });
+  });
+
+  group('Avaliações', () {
+    test('média e texto', () {
+      Avaliacao a(int n) => Avaliacao.fromMap('x', {'nota': n});
+      expect(ResumoNotas.de([]).texto, 'Ainda sem avaliações');
+      final r = ResumoNotas.de([a(5), a(4), a(5)]);
+      expect(r.mediaTexto, '4,7');
+      expect(r.texto, '4,7 (3 avaliações)');
+      expect(ResumoNotas.de([a(3)]).texto, '3,0 (1 avaliação)');
+    });
+
+    test('nota fora da faixa é corrigida na leitura', () {
+      expect(Avaliacao.fromMap('x', {'nota': 9}).nota, 5);
+      expect(Avaliacao.fromMap('x', {'nota': 0}).nota, 1);
+    });
+
+    test('só o primeiro nome fica público', () {
+      expect(Avaliacao.primeiroNome('Ana Maria Souza'), 'Ana');
+      expect(Avaliacao.primeiroNome('  Bruno '), 'Bruno');
     });
   });
 }

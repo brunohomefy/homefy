@@ -6,6 +6,7 @@ import '../models/servico.dart';
 import '../models/solicitacao.dart';
 import '../services/solicitacoes_repo.dart';
 import '../theme/homefy_theme.dart';
+import '../widgets/avaliacoes_widgets.dart';
 import '../widgets/formulario.dart';
 import '../widgets/pedido_card.dart';
 import 'servico_editor_screen.dart' show lerPreco;
@@ -358,10 +359,7 @@ class _ConteudoDetalheState extends State<_ConteudoDetalhe> {
           ),
         ];
       case StatusPedido.concluida:
-        return [
-          Text('Atendimento concluído. Em breve: avaliar o atendimento.',
-              style: t.bodySmall?.copyWith(color: HomefyColors.textSecondary)),
-        ];
+        return [AvaliarAtendimento(pedido: s, souCliente: cliente)];
     }
   }
 }

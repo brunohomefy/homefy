@@ -119,6 +119,14 @@ await passo('meus_pedidos', async () => {
   await tocar('Lavagem completa'); await foto('pedido_proposta');
   await tocar('Confirmar por'); await page.waitForTimeout(1200); await foto('pedido_confirmado');
 });
+await passo('avaliar', async () => {
+  await abrir('/meus-pedidos'); await tocar('Corte Masculino'); await page.waitForTimeout(800); await foto('avaliar_vazio');
+  await tocar('4 estrelas'); await tocar('Enviar avaliação'); await page.waitForTimeout(1000); await foto('avaliar_feito');
+});
+await passo('detalhe_com_notas', async () => {
+  await abrir('/home'); await rolar(500); await tocar('Lavagem completa'); await rolar(400); await foto('detalhe_notas');
+});
+await passo('termos', async () => { await abrir('/login'); await foto('login_termos'); });
 await passo('pedidos_recebidos', async () => {
   await abrir('/pedidos-recebidos'); await foto('pedidos_recebidos');
   await tocar('Faxina residencial'); await foto('pedido_responder');

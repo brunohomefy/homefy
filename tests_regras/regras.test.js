@@ -407,3 +407,48 @@ test('não se apaga pedido nem se mexe na agenda à mão', async () => {
   await assertFails(setDoc(doc(ana(), 'agenda/rafa_2026-10-11_manha'), { solicitacao_id: 'p1', profissional_uid: 'rafa' }));
   await assertSucceeds(getDoc(doc(ana(), 'agenda/rafa_2026-10-10_tarde')));
 });
+
+// ═════════════ Avaliações ═════════════
+
+function avaliacao(extra = {}) {
+  return {
+    profissional_uid: 'rafa', cliente_uid: 'ana', cliente_nome: 'Ana',
+    servico_nome: 'Barba completa', nota: 5, comentario: 'Pontual e caprichoso.',
+    criado_em: serverTimestamp(), ...extra,
+  };
+}
+
+test('cliente avalia atendimento concluído', async () => {
+  await pedidoNoEstado('confirmada');
+  await semRegras((db) => updateDoc(doc(db, 'solicitacoes/p1'), { status: 'concluida' }));
+  await assertSucceeds(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao()));
+  const outro = env.authenticatedContext('joao').firestore();
+  await assertSucceeds(getDoc(doc(outro, 'avaliacoes/p1')));            // pública para logados
+  await assertSucceeds(getDocs(query(collection(outro, 'avaliacoes'), where('profissional_uid', '==', 'rafa'))));
+});
+
+test('não avalia antes de concluir', async () => {
+  await pedidoNoEstado('confirmada');
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao()));
+});
+
+test('avaliação inválida ou de outra pessoa é recusada', async () => {
+  await pedidoNoEstado('confirmada');
+  await semRegras((db) => updateDoc(doc(db, 'solicitacoes/p1'), { status: 'concluida' }));
+  await assertFails(setDoc(doc(rafa(), 'avaliacoes/p1'), avaliacao({ cliente_uid: 'rafa' }))); // profissional se autoavaliando
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ nota: 6 })));
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ nota: 0 })));
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ nota: 4.5 })));
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ profissional_uid: 'joao' })));
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ whatsapp: '5581999991234' })));
+  await assertFails(setDoc(doc(ana(), 'avaliacoes/outro'), avaliacao()));  // sem solicitação concluída
+});
+
+test('avaliação não se edita nem se apaga', async () => {
+  await pedidoNoEstado('confirmada');
+  await semRegras((db) => updateDoc(doc(db, 'solicitacoes/p1'), { status: 'concluida' }));
+  await assertSucceeds(setDoc(doc(ana(), 'avaliacoes/p1'), avaliacao({ nota: 2 })));
+  await assertFails(updateDoc(doc(ana(), 'avaliacoes/p1'), { nota: 5 }));
+  await assertFails(deleteDoc(doc(ana(), 'avaliacoes/p1')));
+  await assertFails(deleteDoc(doc(rafa(), 'avaliacoes/p1')));
+});

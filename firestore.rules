@@ -218,6 +218,30 @@ service cloud.firestore {
       }
     }
 
+    // ───────────── Avaliações ─────────────
+    // Uma por atendimento: o ID é o mesmo da solicitação. Só o cliente avalia,
+    // só depois de "concluída", e não pode mudar nem apagar depois (sem edição
+    // não há como "comprar" nota trocando o texto). Pública para logados.
+    match /avaliacoes/{solicitacaoId} {
+      allow read: if logado();
+      allow create: if logado()
+        && request.resource.data.keys().hasOnly([
+             'profissional_uid', 'cliente_uid', 'cliente_nome', 'servico_nome',
+             'nota', 'comentario', 'criado_em'])
+        && request.resource.data.cliente_uid == request.auth.uid
+        && get(/databases/$(database)/documents/solicitacoes/$(solicitacaoId)).data.status == 'concluida'
+        && get(/databases/$(database)/documents/solicitacoes/$(solicitacaoId)).data.cliente_uid == request.auth.uid
+        && get(/databases/$(database)/documents/solicitacoes/$(solicitacaoId)).data.profissional_uid
+             == request.resource.data.profissional_uid
+        && request.resource.data.get('nota', 0) is int
+        && request.resource.data.nota >= 1 && request.resource.data.nota <= 5
+        && textoAte(request.resource.data.get('comentario', ''), 300)
+        && textoAte(request.resource.data.get('cliente_nome', ''), 40)
+        && textoAte(request.resource.data.get('servico_nome', ''), 60)
+        && request.resource.data.get('criado_em', null) == request.time;
+      allow update, delete: if false;
+    }
+
     // ───────────── Agenda (trava de horário) ─────────────
     // ID = {profissional}_{AAAA-MM-DD}_{periodo}. Como dois documentos não podem
     // ter o mesmo ID, o mesmo horário nunca é confirmado duas vezes.

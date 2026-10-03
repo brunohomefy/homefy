@@ -14,6 +14,7 @@ import '../services/servicos_repo.dart';
 import '../services/solicitacoes_repo.dart';
 import '../theme/homefy_theme.dart';
 import '../widgets/auth_layout.dart' show abrirPagina;
+import '../widgets/avaliacoes_widgets.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/homefy_logo.dart';
 import '../widgets/servico_card.dart';
@@ -665,6 +666,9 @@ class _DetalheServico extends StatelessWidget {
               Text(servico.descricao, style: t.bodyLarge?.copyWith(height: 1.45)),
             ],
             if (servico.profissionalRef != null) SobreProfissional(servico: servico),
+            if (servico.profissionalRef != null || kModoDemo)
+              AvaliacoesDoProfissional(
+                  profissionalUid: servico.profissionalRef?.id ?? 'teste_demo'),
             const SizedBox(height: 20),
             if (servico.temVariacoes)
               _TabelaVariacoes(servico: servico, cor: cor)
