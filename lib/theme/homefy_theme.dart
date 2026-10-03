@@ -77,7 +77,7 @@ ThemeData buildHomefyTheme() {
   );
 
   final body = GoogleFonts.figtreeTextTheme(base.textTheme);
-  final display = GoogleFonts.bricolageGroteskTextTheme(base.textTheme);
+  final display = GoogleFonts.bricolageGrotesqueTextTheme(base.textTheme);
 
   final textTheme = body.copyWith(
     displaySmall: display.displaySmall?.copyWith(
