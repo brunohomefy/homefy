@@ -109,6 +109,21 @@ await passo('novo_servico', async () => {
   await tocar('Lavagem simples', { exato: true }); await tocar('Carro médio'); await foto('editor_faixas');
   await rolar(800); await foto('editor_fim');
 });
+await passo('pedir_atendimento', async () => {
+  await abrir('/home'); await rolar(500); await tocar('Lavagem completa');
+  await tocar('Pedir atendimento'); await page.waitForTimeout(1500); await foto('pedir_topo');
+  await tocar('Enviar pedido'); await rolar(2000); await foto('pedir_erro');
+});
+await passo('meus_pedidos', async () => {
+  await abrir('/meus-pedidos'); await foto('meus_pedidos');
+  await tocar('Lavagem completa'); await foto('pedido_proposta');
+  await tocar('Confirmar por'); await page.waitForTimeout(1200); await foto('pedido_confirmado');
+});
+await passo('pedidos_recebidos', async () => {
+  await abrir('/pedidos-recebidos'); await foto('pedidos_recebidos');
+  await tocar('Faxina residencial'); await foto('pedido_responder');
+  await tocar('Enviar valor'); await page.waitForTimeout(1200); await foto('pedido_respondido');
+});
 await passo('meus_servicos_rota', async () => { await abrir('/meus-servicos'); await foto('meus_servicos_rota'); });
 await passo('conte_experiencia', async () => {
   await abrir('/home'); await tocar('B', { exato: true }).catch(() => {});
