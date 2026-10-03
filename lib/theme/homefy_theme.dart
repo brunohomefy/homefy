@@ -153,7 +153,7 @@ ThemeData buildHomefyTheme() {
       foregroundColor: HomefyColors.text,
       elevation: 0,
       scrolledUnderElevation: 0.5,
-      titleTextStyle: textTheme.titleLarge,
+      titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 22, letterSpacing: -0.4),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: HomefyColors.surface,

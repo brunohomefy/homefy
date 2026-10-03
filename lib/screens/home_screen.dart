@@ -134,7 +134,7 @@ class _VitrineAbaState extends State<VitrineAba> with AutomaticKeepAliveClientMi
         children: [
           Expanded(
             child: Text(
-              _categoria?.rotulo ?? 'Serviços disponíveis',
+              _categoria?.rotulo ?? 'Serviços em Caruaru',
               style: t.titleLarge,
             ),
           ),
@@ -927,8 +927,8 @@ class _FaixaDemo extends StatelessWidget {
           Expanded(
             child: Text(
               'Versão de demonstração: dados de exemplo, nada é salvo (ao recarregar a página, tudo volta ao início). '
-              'Experimente: pedir um serviço, ver "Meus pedidos" no menu do perfil (B), confirmar e avaliar; '
-              'ou "Quero oferecer meus serviços".',
+              'Experimente pedir um serviço; na aba Pedidos, confirmar e avaliar; na aba Conta, '
+              '"Quero oferecer meus serviços".',
               style: t.bodySmall?.copyWith(color: const Color(0xFF5C4100), height: 1.4),
             ),
           ),
