@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../config.dart';
 import '../models/bairros.dart';
-import '../models/categoria.dart';
 import '../models/perfil.dart';
 import '../models/servico.dart';
 import '../models/solicitacao.dart';
