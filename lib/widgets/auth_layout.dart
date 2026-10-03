@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
+import '../config.dart';
 import '../theme/homefy_theme.dart';
 import 'homefy_logo.dart';
 
@@ -147,13 +150,19 @@ class LinhaLink extends StatelessWidget {
 class RodapeTermos extends StatelessWidget {
   const RodapeTermos({super.key});
   @override
-  Widget build(BuildContext context) => Text(
-        'Ao continuar, você concorda com nossos Termos de Serviço '
-        'e Política de Privacidade.',
-        textAlign: TextAlign.center,
-        style: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.copyWith(color: HomefyColors.textMuted, height: 1.4),
-      );
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).textTheme.bodySmall?.copyWith(color: HomefyColors.textMuted, height: 1.4);
+    final link = base?.copyWith(color: HomefyColors.primary, decoration: TextDecoration.underline);
+    return Wrap(alignment: WrapAlignment.center, children: [
+      Text('Ao continuar, você concorda com os ', style: base),
+      InkWell(onTap: () => abrirPagina(kUrlTermos), child: Text('Termos de Uso', style: link)),
+      Text(' e a ', style: base),
+      InkWell(onTap: () => abrirPagina(kUrlPrivacidade), child: Text('Política de Privacidade', style: link)),
+      Text('.', style: base),
+    ]);
+  }
 }
+
+/// Abre uma página pública (termos, privacidade) no navegador.
+Future<void> abrirPagina(String url) =>
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);

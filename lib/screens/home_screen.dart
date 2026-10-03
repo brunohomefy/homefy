@@ -13,6 +13,7 @@ import '../models/solicitacao.dart';
 import '../services/servicos_repo.dart';
 import '../services/solicitacoes_repo.dart';
 import '../theme/homefy_theme.dart';
+import '../widgets/auth_layout.dart' show abrirPagina;
 import '../widgets/feedback_sheet.dart';
 import '../widgets/homefy_logo.dart';
 import '../widgets/servico_card.dart';
@@ -471,6 +472,12 @@ class _FolhaPerfil extends StatelessWidget {
                 Navigator.of(context).pop();
                 abrirFeedback(context, tipo: TipoFeedback.experiencia);
               },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Privacidade e termos'),
+              onTap: () => abrirPagina(kUrlPrivacidade),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
