@@ -30,6 +30,11 @@ Dono: Bruno. Fala português do Brasil, sem jargão. Cliente e profissional usam
   - bairros, atende_toda_cidade, ativo, profissional_ref, criado_em, atualizado_em.
   - Não se apaga, só se desativa.
 - `feedbacks/{id}`: tipo `nao_achei|experiencia`. Só escrita pelo app.
+- `solicitacoes/{id}`: pedido de atendimento. status `pendente → proposta|recusada → confirmada|cancelada → concluida|cancelada`.
+  Campos: cliente_uid/nome, profissional_uid/nome, servico_id/nome, categoria_id, variacao, preco_referencia, data (`AAAA-MM-DD`), periodo (`manha|tarde|noite`), bairro, observacao, valor_final, mensagem_profissional, datas de cada etapa. **Sem endereço** (combinado no WhatsApp).
+  - `solicitacoes/{id}/privado/cliente`: WhatsApp do cliente; o profissional só lê depois de confirmada.
+- `agenda/{profissional}_{data}_{periodo}`: trava de horário, criada no mesmo lote da confirmação (impede confirmar o mesmo horário duas vezes).
+- `usuarios/{uid}/liberados/{clienteUid}`: libera o WhatsApp do profissional para quem confirmou. Criado na confirmação e apagado no cancelamento.
 - Catálogo fixo em código: `lib/models/categoria.dart` (subtipos/portes) e `lib/models/bairros.dart` (45 bairros, revisados pelo Bruno).
 - **Toda mudança de dados precisa vir junto com:** `firestore.rules` + testes em `tests_regras/regras.test.js` + testes Dart.
 
@@ -44,13 +49,14 @@ Dono: Bruno. Fala português do Brasil, sem jargão. Cliente e profissional usam
 - **Cloud Functions:** publicar funções exige o Blaze. Projetar tudo com regras + app (transações no cliente).
 - **Login por SMS/telefone:** no Spark são cerca de 10 por dia, só para teste. Manter e-mail e senha.
 - **API do WhatsApp Business, Google Maps/Places, SMS, gateways de pagamento:** pagos ou exigem cartão. Usar `wa.me` e a lista fixa de bairros.
-- **Notificações push** enviadas por servidor precisam de Functions (Blaze). Por enquanto, usar o status dentro do app.
+- **Notificações push** enviadas por servidor precisam de Functions (Blaze). Por enquanto, usar o status dentro do app (faixa de aviso na Home). É o maior limite do plano grátis.
 - **iOS / App Store:** US$ 99 por ano. Fora do escopo; o foco é Android e web.
 - **Play Store:** taxa única de US$ 25. É o único custo previsto, só na publicação.
 - Plano Blaze: só com decisão explícita do Bruno.
 
 ## Pendências atuais (ver docs/ESTADO_ATUAL.md)
-1. Publicar `firestore.rules` (pode ser pelo PC: `npx firebase-tools deploy --only firestore:rules`).
+1. Publicar `firestore.rules`, colando no console ou com `npx firebase-tools deploy --only firestore:rules`.
 2. Rodar `tools/atualizar_dados_v2.sh` no Cloud Shell (apaga só o campo `email` dos perfis e atualiza os profissionais de teste).
-3. Teste manual: seção 4 de `docs/RELATORIO_TESTES_02.md`.
-4. Próxima camada: **solicitação de atendimento** (confirmar o escopo com o Bruno antes).
+3. Testes manuais: `docs/RELATORIO_TESTES_02.md` seção 4 e `docs/RELATORIO_TESTES_03.md` seção 7.
+4. Bruno revisar as escolhas da camada de solicitação (relatório 03, seção 6).
+5. Próxima camada sugerida: **avaliações** (confirmar o escopo com o Bruno antes).

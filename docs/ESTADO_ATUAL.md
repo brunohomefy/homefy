@@ -81,6 +81,25 @@ Ver `docs/RELATORIO_TESTES_02.md`. O que foi entregue:
 
 Pendências do Bruno: publicar as regras, rodar `tools/atualizar_dados_v2.sh` e fazer o teste manual (seção 4 do relatório 02).
 
-## 5. Próxima camada sugerida: SOLICITAÇÃO DE ATENDIMENTO
+## 5. Camada concluída: SOLICITAÇÃO DE ATENDIMENTO (03/10/2026, feita com o Bruno ausente)
 
-Pedido com detalhes → profissional responde com valor final → cliente aprova → WhatsApp liberado (D3). Usar transação para não confirmar dois atendimentos no mesmo horário (dossiê 65.5). Confirmar o escopo com o Bruno antes.
+Ver `docs/RELATORIO_TESTES_03.md`. Fluxo:
+1. Cliente pede (faixa, dia, período, bairro, WhatsApp, observação).
+2. Profissional envia o valor final ou recusa.
+3. Cliente confirma: o horário é travado em `agenda` e os WhatsApps são liberados (D3, link `wa.me`).
+4. Profissional conclui.
+
+Qualquer um cancela antes da conclusão. Regras: 41 testes; app: 20 testes.
+Pontos para o Bruno revisar: seção 6 do relatório 03 (períodos em vez de hora, sem notificação fora do app).
+
+## 6. Pendências do Bruno
+
+1. Publicar `firestore.rules` (uma vez só, já inclui as duas camadas).
+2. Rodar `tools/atualizar_dados_v2.sh` no Cloud Shell.
+3. Testes manuais: relatório 02, seção 4, e relatório 03, seção 7.
+
+## 7. Próxima camada sugerida: AVALIAÇÕES
+
+Depois de "concluído", o cliente dá uma nota de 1 a 5 e um comentário curto; a nota média aparece no perfil do profissional.
+Sem servidor, a média pode ser calculada no app a partir das avaliações (poucas por profissional no piloto).
+Confirmar o escopo com o Bruno antes.
