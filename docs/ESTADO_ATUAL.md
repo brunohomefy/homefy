@@ -92,14 +92,23 @@ Ver `docs/RELATORIO_TESTES_03.md`. Fluxo:
 Qualquer um cancela antes da conclusão. Regras: 41 testes; app: 20 testes.
 Pontos para o Bruno revisar: seção 6 do relatório 03 (períodos em vez de hora, sem notificação fora do app).
 
-## 6. Pendências do Bruno
+## 6. Concluído também em 03/10/2026: PRIVACIDADE, TERMOS E AVALIAÇÕES
 
-1. Publicar `firestore.rules` (uma vez só, já inclui as duas camadas).
+Ver `docs/RELATORIO_TESTES_04.md`.
+- **Páginas públicas:** `privacidade.html` e `termos.html` (exigidas pela Play Store e pela LGPD), com links no login, no cadastro e no perfil. Falta preencher o **e-mail de contato**.
+- **Avaliações:** de 1 a 5 estrelas, mais um comentário opcional, depois de "concluído". Uma por atendimento, sem edição. A média e os comentários aparecem no detalhe do serviço.
+- **Testes:** regras 45/45; app 23/23.
+
+## 7. Pendências do Bruno
+
+1. Publicar `firestore.rules` (uma vez só; já inclui todas as camadas).
 2. Rodar `tools/atualizar_dados_v2.sh` no Cloud Shell.
-3. Testes manuais: relatório 02, seção 4, e relatório 03, seção 7.
+3. Testes manuais: relatórios 02 (seção 4), 03 (seção 7) e 04 (seção 6).
+4. Definir o e-mail de contato do Homefy (para as páginas de privacidade e termos).
+5. Revisar as escolhas: relatório 03 (seção 6) e 04 (seção 5).
 
-## 7. Próxima camada sugerida: AVALIAÇÕES
+## 8. Próximos passos sugeridos (confirmar com o Bruno)
 
-Depois de "concluído", o cliente dá uma nota de 1 a 5 e um comentário curto; a nota média aparece no perfil do profissional.
-Sem servidor, a média pode ser calculada no app a partir das avaliações (poucas por profissional no piloto).
-Confirmar o escopo com o Bruno antes.
+- **Android:** o Bruno baixa a configuração Android no console do Firebase (1 minuto); depois o GitHub gera um APK de teste de graça.
+- **Publicar na Play Store:** taxa única de US$ 25, o único custo previsto. Exige política de privacidade (já existe), ícone, prints e descrição.
+- **Média de avaliação no card da Home**, guardando a média no perfil.

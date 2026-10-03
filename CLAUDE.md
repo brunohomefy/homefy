@@ -33,6 +33,8 @@ Dono: Bruno. Fala português do Brasil, sem jargão. Cliente e profissional usam
 - `solicitacoes/{id}`: pedido de atendimento. status `pendente → proposta|recusada → confirmada|cancelada → concluida|cancelada`.
   Campos: cliente_uid/nome, profissional_uid/nome, servico_id/nome, categoria_id, variacao, preco_referencia, data (`AAAA-MM-DD`), periodo (`manha|tarde|noite`), bairro, observacao, valor_final, mensagem_profissional, datas de cada etapa. **Sem endereço** (combinado no WhatsApp).
   - `solicitacoes/{id}/privado/cliente`: WhatsApp do cliente; o profissional só lê depois de confirmada.
+- `avaliacoes/{solicitacaoId}`: nota (int 1–5), comentario (≤300), cliente_nome (só o primeiro nome), profissional_uid, cliente_uid, servico_nome. Só o cliente cria, só se a solicitação estiver `concluida`; sem edição nem exclusão; leitura para logados. A média é calculada no app.
+- Páginas públicas em `paginas/` (copiadas para o site pelo CI): `privacidade.html` e `termos.html`. Links em `lib/config.dart`.
 - `agenda/{profissional}_{data}_{periodo}`: trava de horário, criada no mesmo lote da confirmação (impede confirmar o mesmo horário duas vezes).
 - `usuarios/{uid}/liberados/{clienteUid}`: libera o WhatsApp do profissional para quem confirmou. Criado na confirmação e apagado no cancelamento.
 - Catálogo fixo em código: `lib/models/categoria.dart` (subtipos/portes) e `lib/models/bairros.dart` (45 bairros, revisados pelo Bruno).
@@ -54,9 +56,9 @@ Dono: Bruno. Fala português do Brasil, sem jargão. Cliente e profissional usam
 - **Play Store:** taxa única de US$ 25. É o único custo previsto, só na publicação.
 - Plano Blaze: só com decisão explícita do Bruno.
 
-## Pendências atuais (ver docs/ESTADO_ATUAL.md)
+## Pendências atuais (ver docs/ESTADO_ATUAL.md, seção 7)
 1. Publicar `firestore.rules`, colando no console ou com `npx firebase-tools deploy --only firestore:rules`.
-2. Rodar `tools/atualizar_dados_v2.sh` no Cloud Shell (apaga só o campo `email` dos perfis e atualiza os profissionais de teste).
-3. Testes manuais: `docs/RELATORIO_TESTES_02.md` seção 4 e `docs/RELATORIO_TESTES_03.md` seção 7.
-4. Bruno revisar as escolhas da camada de solicitação (relatório 03, seção 6).
-5. Próxima camada sugerida: **avaliações** (confirmar o escopo com o Bruno antes).
+2. Rodar `tools/atualizar_dados_v2.sh` no Cloud Shell.
+3. Testes manuais: relatórios 02, 03 e 04.
+4. E-mail de contato nas páginas `paginas/privacidade.html` e `paginas/termos.html` (hoje: "[e-mail de contato a definir]").
+5. Próximo passo sugerido: Android (precisa da configuração Android do console, feita pelo Bruno) e depois a Play Store.
