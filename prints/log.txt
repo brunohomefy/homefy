@@ -1,0 +1,103 @@
+console: Bad state: Stream has already been listened to.
+console: at Object.i (http://localhost:8000/homefy/demo/main.dart.js:3762:20)
+    at ps.Ii (http://localhost:8000/homefy/demo/main.dart.js:43431:24)
+    at hR.i2 (http://localhost:8000/homefy/demo/main.dart.js:43615:27)
+    at hR.xc (http://localhost:8000/homefy/demo/main.dart.js:43617:23)
+    at JV.uU (http://localhost:8000/homefy/demo/main.dart.js:77710:11)
+    at JV.aC (http://localhost:8000/homefy/demo/main.dart.js:77694:3)
+    at iv.Gm (http://localhost:8000/homefy/demo/main.dart.js:83032:14)
+    at iv.fz (http://localhost:8000/homefy/demo/main.dart.js:82999:6)
+    at a70.x_ (http://localhost:8000/homefy/demo/main.dart.js:82855:17)
+    at a70.fz (http://localhost:8000/homefy/demo/main.dart.js:83201:40)
+print: ../../prints/01_home_topo.png
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+print: ../../prints/02_home_lista.png
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+print: ../../prints/03_home_fim.png
+ok: home
+console: Bad state: Stream has already been listened to.
+console: at Object.i (http://localhost:8000/homefy/demo/main.dart.js:3762:20)
+    at ps.Ii (http://localhost:8000/homefy/demo/main.dart.js:43431:24)
+    at hR.i2 (http://localhost:8000/homefy/demo/main.dart.js:43615:27)
+    at hR.xc (http://localhost:8000/homefy/demo/main.dart.js:43617:23)
+    at JV.uU (http://localhost:8000/homefy/demo/main.dart.js:77710:11)
+    at JV.aC (http://localhost:8000/homefy/demo/main.dart.js:77694:3)
+    at iv.Gm (http://localhost:8000/homefy/demo/main.dart.js:83032:14)
+    at iv.fz (http://localhost:8000/homefy/demo/main.dart.js:82999:6)
+    at a70.x_ (http://localhost:8000/homefy/demo/main.dart.js:82855:17)
+    at a70.fz (http://localhost:8000/homefy/demo/main.dart.js:83201:40)
+FALHOU: bairro: não achei: Onde será o atendimento
+print: ../../prints/04_falha_bairro.png
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+FALHOU: detalhe_faixas: não achei: Lavagem completa
+print: ../../prints/05_falha_detalhe_faixas.png
+console: Bad state: Stream has already been listened to.
+console: at Object.i (http://localhost:8000/homefy/demo/main.dart.js:3762:20)
+    at ps.Ii (http://localhost:8000/homefy/demo/main.dart.js:43431:24)
+    at hR.i2 (http://localhost:8000/homefy/demo/main.dart.js:43615:27)
+    at hR.xc (http://localhost:8000/homefy/demo/main.dart.js:43617:23)
+    at JV.uU (http://localhost:8000/homefy/demo/main.dart.js:77710:11)
+    at JV.aC (http://localhost:8000/homefy/demo/main.dart.js:77694:3)
+    at iv.Gm (http://localhost:8000/homefy/demo/main.dart.js:83032:14)
+    at iv.fz (http://localhost:8000/homefy/demo/main.dart.js:82999:6)
+    at a70.x_ (http://localhost:8000/homefy/demo/main.dart.js:82855:17)
+    at a70.fz (http://localhost:8000/homefy/demo/main.dart.js:83201:40)
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+FALHOU: nao_achou: não achei: Não achou?
+print: ../../prints/06_falha_nao_achou.png
+print: ../../prints/07_oferta_1_vazio.png
+print: ../../prints/08_oferta_1_erro.png
+print: ../../prints/09_oferta_1_marcado.png
+print: ../../prints/10_oferta_2_bairros.png
+print: ../../prints/11_oferta_2_toda_cidade.png
+print: ../../prints/12_oferta_3_contato.png
+print: ../../prints/13_oferta_4_revisao.png
+FALHOU: oferta: não achei: Começar a oferecer
+print: ../../prints/14_falha_oferta.png
+FALHOU: novo_servico: não achei: Cadastrar serviço
+print: ../../prints/15_falha_novo_servico.png
+console: Bad state: Stream has already been listened to.
+console: at Object.i (http://localhost:8000/homefy/demo/main.dart.js:3762:20)
+    at ps.Ii (http://localhost:8000/homefy/demo/main.dart.js:43431:24)
+    at hR.i2 (http://localhost:8000/homefy/demo/main.dart.js:43615:27)
+    at hR.xc (http://localhost:8000/homefy/demo/main.dart.js:43617:23)
+    at JV.uU (http://localhost:8000/homefy/demo/main.dart.js:77710:11)
+    at JV.aC (http://localhost:8000/homefy/demo/main.dart.js:77694:3)
+    at iv.Gm (http://localhost:8000/homefy/demo/main.dart.js:83032:14)
+    at iv.fz (http://localhost:8000/homefy/demo/main.dart.js:82999:6)
+    at a70.x_ (http://localhost:8000/homefy/demo/main.dart.js:82855:17)
+    at a70.fz (http://localhost:8000/homefy/demo/main.dart.js:83201:40)
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+FALHOU: pedir_atendimento: não achei: Lavagem completa
+print: ../../prints/16_falha_pedir_atendimento.png
+print: ../../prints/17_meus_pedidos.png
+print: ../../prints/18_pedido_proposta.png
+print: ../../prints/19_pedido_confirmado.png
+ok: meus_pedidos
+print: ../../prints/20_avaliar_vazio.png
+print: ../../prints/21_avaliar_feito.png
+ok: avaliar
+console: Bad state: Stream has already been listened to.
+console: at Object.i (http://localhost:8000/homefy/demo/main.dart.js:3762:20)
+    at ps.Ii (http://localhost:8000/homefy/demo/main.dart.js:43431:24)
+    at hR.i2 (http://localhost:8000/homefy/demo/main.dart.js:43615:27)
+    at hR.xc (http://localhost:8000/homefy/demo/main.dart.js:43617:23)
+    at JV.uU (http://localhost:8000/homefy/demo/main.dart.js:77710:11)
+    at JV.aC (http://localhost:8000/homefy/demo/main.dart.js:77694:3)
+    at iv.Gm (http://localhost:8000/homefy/demo/main.dart.js:83032:14)
+    at iv.fz (http://localhost:8000/homefy/demo/main.dart.js:82999:6)
+    at a70.x_ (http://localhost:8000/homefy/demo/main.dart.js:82855:17)
+    at a70.fz (http://localhost:8000/homefy/demo/main.dart.js:83201:40)
+console: Another exception was thrown: Instance of 'minified:kt<erased>'
+FALHOU: detalhe_com_notas: não achei: Lavagem completa
+print: ../../prints/22_falha_detalhe_com_notas.png
+print: ../../prints/23_pagina_privacidade.png
+ok: termos
+print: ../../prints/24_pedidos_recebidos.png
+print: ../../prints/25_pedido_responder.png
+print: ../../prints/26_pedido_respondido.png
+ok: pedidos_recebidos
+print: ../../prints/27_meus_servicos_rota.png
+ok: meus_servicos_rota
+print: ../../prints/28_aba_conta.png
+ok: conte_experiencia
