@@ -234,3 +234,176 @@ test('coleções não desenhadas continuam fechadas', async () => {
   await assertFails(getDocs(collection(ana(), 'solicitacoes')));
   await assertFails(setDoc(doc(ana(), 'avaliacoes/x'), { nota: 5 }));
 });
+
+// ═════════════ Solicitações de atendimento ═════════════
+// Ana (cliente) pede a barba do Rafa (profissional, serviço s1).
+
+function pedido(db, extra = {}) {
+  return {
+    cliente_uid: 'ana', cliente_nome: 'Ana Souza', profissional_uid: 'rafa',
+    servico_id: 's1', servico_nome: 'Barba completa', categoria_id: 'cabelo',
+    variacao: 'Padrão', preco_referencia: 20, data: '2026-10-10', periodo: 'tarde',
+    bairro: 'salgado', observacao: 'Portão azul', status: 'pendente',
+    criado_em: serverTimestamp(), ...extra,
+  };
+}
+
+async function criarPedido(db, id = 'p1', extra = {}) {
+  const lote = writeBatch(db);
+  lote.set(doc(db, `solicitacoes/${id}`), pedido(db, extra));
+  lote.set(doc(db, `solicitacoes/${id}/privado/cliente`), { whatsapp: '5581977776666' });
+  return lote.commit();
+}
+
+async function semRegras(fn) {
+  await env.withSecurityRulesDisabled(async (ctx) => fn(ctx.firestore()));
+}
+
+async function pedidoNoEstado(status, id = 'p1') {
+  await semRegras(async (db) => {
+    await setDoc(doc(db, `solicitacoes/${id}`), { ...pedido(db), status, criado_em: new Date(),
+      ...(status !== 'pendente' ? { valor_final: 25, respondido_em: new Date() } : {}) });
+    await setDoc(doc(db, `solicitacoes/${id}/privado/cliente`), { whatsapp: '5581977776666' });
+    if (status === 'confirmada') {
+      await setDoc(doc(db, 'agenda/rafa_2026-10-10_tarde'), { solicitacao_id: id, profissional_uid: 'rafa' });
+      await setDoc(doc(db, 'usuarios/rafa/liberados/ana'), { solicitacao_id: id });
+    }
+  });
+}
+
+function confirmar(db, id = 'p1') {
+  const lote = writeBatch(db);
+  lote.update(doc(db, `solicitacoes/${id}`), { status: 'confirmada', confirmado_em: serverTimestamp() });
+  lote.set(doc(db, 'agenda/rafa_2026-10-10_tarde'), { solicitacao_id: id, profissional_uid: 'rafa' });
+  lote.set(doc(db, 'usuarios/rafa/liberados/ana'), { solicitacao_id: id });
+  return lote.commit();
+}
+
+function cancelarConfirmada(db, quem, id = 'p1') {
+  const lote = writeBatch(db);
+  lote.update(doc(db, `solicitacoes/${id}`), { status: 'cancelada', cancelado_por: quem, cancelado_em: serverTimestamp() });
+  lote.delete(doc(db, 'agenda/rafa_2026-10-10_tarde'));
+  lote.delete(doc(db, 'usuarios/rafa/liberados/ana'));
+  return lote.commit();
+}
+
+test('cliente cria pedido com WhatsApp no mesmo lote', async () => {
+  await assertSucceeds(criarPedido(ana()));
+});
+
+test('pedido inválido é recusado', async () => {
+  const db = ana();
+  await assertFails(criarPedido(db, 'x1', { cliente_uid: 'rafa' }));          // em nome de outro
+  await assertFails(criarPedido(db, 'x2', { profissional_uid: 'joao' }));     // serviço não é do joão
+  await assertFails(criarPedido(db, 'x3', { status: 'confirmada' }));         // pular etapas
+  await assertFails(criarPedido(db, 'x4', { periodo: 'madrugada' }));
+  await assertFails(criarPedido(db, 'x5', { data: 'amanhã' }));
+  await assertFails(criarPedido(db, 'x6', { endereco: 'Rua X, 10' }));        // endereço não fica no banco
+});
+
+test('profissional não pede o próprio serviço', async () => {
+  const db = rafa();
+  const lote = writeBatch(db);
+  lote.set(doc(db, 'solicitacoes/x7'), { ...pedido(db), cliente_uid: 'rafa' });
+  await assertFails(lote.commit());
+});
+
+test('não pede serviço desativado', async () => {
+  await semRegras((db) => updateDoc(doc(db, 'servicos/s1'), { ativo: false }));
+  await assertFails(criarPedido(ana()));
+});
+
+test('só as duas partes leem o pedido', async () => {
+  await pedidoNoEstado('pendente');
+  await assertSucceeds(getDoc(doc(ana(), 'solicitacoes/p1')));
+  await assertSucceeds(getDoc(doc(rafa(), 'solicitacoes/p1')));
+  const outro = env.authenticatedContext('joao').firestore();
+  await assertFails(getDoc(doc(outro, 'solicitacoes/p1')));
+});
+
+test('listas filtradas pelo próprio uid funcionam', async () => {
+  await pedidoNoEstado('pendente');
+  await assertSucceeds(getDocs(query(collection(ana(), 'solicitacoes'), where('cliente_uid', '==', 'ana'))));
+  await assertSucceeds(getDocs(query(collection(rafa(), 'solicitacoes'), where('profissional_uid', '==', 'rafa'))));
+  await assertFails(getDocs(collection(ana(), 'solicitacoes')));
+});
+
+test('WhatsApp do cliente: profissional só vê depois da confirmação', async () => {
+  await pedidoNoEstado('proposta');
+  await assertSucceeds(getDoc(doc(ana(), 'solicitacoes/p1/privado/cliente')));
+  await assertFails(getDoc(doc(rafa(), 'solicitacoes/p1/privado/cliente')));
+  await semRegras((db) => updateDoc(doc(db, 'solicitacoes/p1'), { status: 'confirmada' }));
+  await assertSucceeds(getDoc(doc(rafa(), 'solicitacoes/p1/privado/cliente')));
+});
+
+test('profissional envia valor final ou recusa; cliente não', async () => {
+  await pedidoNoEstado('pendente');
+  await assertFails(updateDoc(doc(ana(), 'solicitacoes/p1'), {
+    status: 'proposta', valor_final: 1, respondido_em: serverTimestamp() }));
+  await assertFails(updateDoc(doc(rafa(), 'solicitacoes/p1'), {
+    status: 'proposta', valor_final: 0, respondido_em: serverTimestamp() }));
+  await assertSucceeds(updateDoc(doc(rafa(), 'solicitacoes/p1'), {
+    status: 'proposta', valor_final: 25, mensagem_profissional: 'Fechado!', respondido_em: serverTimestamp() }));
+});
+
+test('profissional recusa um pedido pendente', async () => {
+  await pedidoNoEstado('pendente');
+  await assertSucceeds(updateDoc(doc(rafa(), 'solicitacoes/p1'), {
+    status: 'recusada', mensagem_profissional: 'Sem agenda', respondido_em: serverTimestamp() }));
+});
+
+test('cliente confirma com trava de agenda e libera o WhatsApp', async () => {
+  await pedidoNoEstado('proposta');
+  await assertFails(getDoc(doc(ana(), 'usuarios/rafa/privado/contato')));
+  await assertSucceeds(confirmar(ana()));
+  await assertSucceeds(getDoc(doc(ana(), 'usuarios/rafa/privado/contato')));
+});
+
+test('confirmar sem criar a trava de agenda é recusado', async () => {
+  await pedidoNoEstado('proposta');
+  await assertFails(updateDoc(doc(ana(), 'solicitacoes/p1'), { status: 'confirmada', confirmado_em: serverTimestamp() }));
+});
+
+test('mesmo horário não é confirmado duas vezes', async () => {
+  await pedidoNoEstado('confirmada', 'p1');
+  await pedidoNoEstado('proposta', 'p2');
+  await assertFails(confirmar(ana(), 'p2'));
+});
+
+test('profissional não confirma pelo cliente', async () => {
+  await pedidoNoEstado('proposta');
+  await assertFails(confirmar(rafa()));
+});
+
+test('cliente desiste antes de confirmar', async () => {
+  await pedidoNoEstado('proposta');
+  await assertSucceeds(updateDoc(doc(ana(), 'solicitacoes/p1'), {
+    status: 'cancelada', cancelado_por: 'cliente', cancelado_em: serverTimestamp() }));
+});
+
+test('cancelar confirmado libera o horário e tira o WhatsApp', async () => {
+  await pedidoNoEstado('confirmada');
+  await assertFails(cancelarConfirmada(rafa(), 'cliente'));       // mentir quem cancelou
+  await assertSucceeds(cancelarConfirmada(rafa(), 'profissional'));
+  await assertFails(getDoc(doc(ana(), 'usuarios/rafa/privado/contato')));
+});
+
+test('cancelar confirmado sem liberar o horário é recusado', async () => {
+  await pedidoNoEstado('confirmada');
+  await assertFails(updateDoc(doc(ana(), 'solicitacoes/p1'), {
+    status: 'cancelada', cancelado_por: 'cliente', cancelado_em: serverTimestamp() }));
+});
+
+test('profissional conclui; cliente não', async () => {
+  await pedidoNoEstado('confirmada');
+  await assertFails(updateDoc(doc(ana(), 'solicitacoes/p1'), { status: 'concluida', concluido_em: serverTimestamp() }));
+  await assertSucceeds(updateDoc(doc(rafa(), 'solicitacoes/p1'), { status: 'concluida', concluido_em: serverTimestamp() }));
+});
+
+test('não se apaga pedido nem se mexe na agenda à mão', async () => {
+  await pedidoNoEstado('confirmada');
+  await assertFails(deleteDoc(doc(ana(), 'solicitacoes/p1')));
+  await assertFails(deleteDoc(doc(ana(), 'agenda/rafa_2026-10-10_tarde')));
+  await assertFails(setDoc(doc(ana(), 'agenda/rafa_2026-10-11_manha'), { solicitacao_id: 'p1', profissional_uid: 'rafa' }));
+  await assertSucceeds(getDoc(doc(ana(), 'agenda/rafa_2026-10-10_tarde')));
+});

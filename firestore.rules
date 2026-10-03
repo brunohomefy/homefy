@@ -80,16 +80,162 @@ service cloud.firestore {
       }
 
       // ───────────── Dados privados ─────────────
-      // Só o dono lê e grava. Quando existirem pedidos, o cliente com pedido
-      // aceito vai poder ver o WhatsApp (decisão D3). Ainda não.
+      // O dono lê e grava. Um cliente com atendimento CONFIRMADO com este
+      // profissional também lê (decisão D3), via usuarios/{uid}/liberados/{cliente}.
       match /privado/contato {
-        allow read: if eDono(uid);
+        allow read: if eDono(uid)
+          || (logado() && exists(/databases/$(database)/documents/usuarios/$(uid)/liberados/$(request.auth.uid)));
         allow create, update: if eDono(uid)
           && request.resource.data.keys().hasOnly(['whatsapp', 'atualizado_em'])
           && request.resource.data.whatsapp is string
           && request.resource.data.whatsapp.matches('55[0-9]{10,11}');
         allow delete: if false;
       }
+
+      // Quem pode ver o WhatsApp deste profissional. Criado pelo cliente no
+      // mesmo lote em que confirma o atendimento; removido se cancelar.
+      match /liberados/{clienteUid} {
+        allow read: if eDono(uid) || eDono(clienteUid);
+        allow create: if eDono(clienteUid)
+          && request.resource.data.keys().hasOnly(['solicitacao_id'])
+          && solicitacaoDepois(request.resource.data.solicitacao_id).status == 'confirmada'
+          && solicitacaoDepois(request.resource.data.solicitacao_id).cliente_uid == clienteUid
+          && solicitacaoDepois(request.resource.data.solicitacao_id).profissional_uid == uid;
+        allow delete: if logado()
+          && (request.auth.uid == clienteUid || request.auth.uid == uid)
+          && solicitacaoDepois(resource.data.solicitacao_id).status == 'cancelada';
+        allow update: if false;
+      }
+    }
+
+    function solicitacaoDepois(id) {
+      return getAfter(/databases/$(database)/documents/solicitacoes/$(id)).data;
+    }
+
+    // ───────────── Solicitações de atendimento ─────────────
+    // Fluxo: pendente → (profissional) proposta | recusada
+    //        proposta → (cliente) confirmada | cancelada
+    //        pendente → (cliente) cancelada
+    //        confirmada → (qualquer um) cancelada | (profissional) concluida
+    // Só cliente e profissional da solicitação leem. Endereço completo NÃO
+    // fica no banco: é combinado pelo WhatsApp depois da confirmação (LGPD).
+    match /solicitacoes/{id} {
+      function eParte() {
+        return logado() && (request.auth.uid == resource.data.cliente_uid
+          || request.auth.uid == resource.data.profissional_uid);
+      }
+      function mudou() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+      function de(st) { return resource.data.status == st; }
+      function para(st) { return request.resource.data.status == st; }
+      function eCliente() { return logado() && request.auth.uid == resource.data.cliente_uid; }
+      function eProfissional() { return logado() && request.auth.uid == resource.data.profissional_uid; }
+      function agendaId() {
+        return resource.data.profissional_uid + '_' + resource.data.data + '_' + resource.data.periodo;
+      }
+
+      allow read: if eParte();
+
+      allow create: if logado()
+        && request.resource.data.keys().hasOnly([
+             'cliente_uid', 'cliente_nome', 'profissional_uid', 'servico_id',
+             'servico_nome', 'categoria_id', 'variacao', 'preco_referencia',
+             'data', 'periodo', 'bairro', 'observacao', 'status', 'criado_em'])
+        && request.resource.data.cliente_uid == request.auth.uid
+        && request.resource.data.profissional_uid != request.auth.uid
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criado_em == request.time
+        && textoAte(request.resource.data.get('cliente_nome', ''), 80)
+        && textoAte(request.resource.data.get('servico_nome', ''), 60)
+        && textoAte(request.resource.data.get('categoria_id', ''), 20)
+        && textoAte(request.resource.data.get('variacao', ''), 40)
+        && (request.resource.data.get('preco_referencia', null) == null
+            || request.resource.data.preco_referencia is number)
+        && request.resource.data.get('data', '') is string
+        && request.resource.data.data.matches('20[0-9]{2}-[01][0-9]-[0-3][0-9]')
+        && request.resource.data.get('periodo', '') in ['manha', 'tarde', 'noite']
+        && textoAte(request.resource.data.get('bairro', ''), 60)
+        && textoAte(request.resource.data.get('observacao', ''), 500)
+        // O serviço existe, está ativo e é mesmo deste profissional.
+        && get(/databases/$(database)/documents/servicos/$(request.resource.data.servico_id)).data.ativo == true
+        && get(/databases/$(database)/documents/servicos/$(request.resource.data.servico_id)).data.profissional_ref
+             == caminhoUsuario(request.resource.data.profissional_uid);
+
+      allow update: if eParte() && (
+        // Profissional envia o valor final.
+        (eProfissional() && de('pendente') && para('proposta')
+          && mudou().hasOnly(['status', 'valor_final', 'mensagem_profissional', 'respondido_em'])
+          && request.resource.data.valor_final is number
+          && request.resource.data.valor_final > 0
+          && request.resource.data.valor_final <= 100000
+          && textoAte(request.resource.data.get('mensagem_profissional', ''), 500)
+          && request.resource.data.respondido_em == request.time)
+        // Profissional recusa.
+        || (eProfissional() && de('pendente') && para('recusada')
+          && mudou().hasOnly(['status', 'mensagem_profissional', 'respondido_em'])
+          && textoAte(request.resource.data.get('mensagem_profissional', ''), 500)
+          && request.resource.data.respondido_em == request.time)
+        // Cliente confirma: no mesmo lote cria a trava de agenda e a liberação do WhatsApp.
+        || (eCliente() && de('proposta') && para('confirmada')
+          && mudou().hasOnly(['status', 'confirmado_em'])
+          && request.resource.data.confirmado_em == request.time
+          && existsAfter(/databases/$(database)/documents/agenda/$(agendaId()))
+          && getAfter(/databases/$(database)/documents/agenda/$(agendaId())).data.solicitacao_id == id)
+        // Cliente desiste antes de confirmar.
+        || (eCliente() && (de('pendente') || de('proposta')) && para('cancelada')
+          && mudou().hasOnly(['status', 'cancelado_por', 'cancelado_em'])
+          && request.resource.data.cancelado_por == 'cliente'
+          && request.resource.data.cancelado_em == request.time)
+        // Qualquer um cancela um atendimento confirmado, liberando o horário no mesmo lote.
+        || (de('confirmada') && para('cancelada')
+          && mudou().hasOnly(['status', 'cancelado_por', 'cancelado_em'])
+          && request.resource.data.cancelado_por == (eCliente() ? 'cliente' : 'profissional')
+          && request.resource.data.cancelado_em == request.time
+          && !existsAfter(/databases/$(database)/documents/agenda/$(agendaId())))
+        // Profissional marca como concluído.
+        || (eProfissional() && de('confirmada') && para('concluida')
+          && mudou().hasOnly(['status', 'concluido_em'])
+          && request.resource.data.concluido_em == request.time)
+      );
+
+      allow delete: if false;
+
+      // WhatsApp do cliente: o profissional só lê depois da confirmação.
+      match /privado/cliente {
+        function pai() {
+          return get(/databases/$(database)/documents/solicitacoes/$(id)).data;
+        }
+        allow read: if logado() && (request.auth.uid == pai().cliente_uid
+          || (request.auth.uid == pai().profissional_uid && pai().status in ['confirmada', 'concluida']));
+        allow create: if logado()
+          && getAfter(/databases/$(database)/documents/solicitacoes/$(id)).data.cliente_uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['whatsapp'])
+          && request.resource.data.whatsapp is string
+          && request.resource.data.whatsapp.matches('55[0-9]{10,11}');
+        allow update, delete: if false;
+      }
+    }
+
+    // ───────────── Agenda (trava de horário) ─────────────
+    // ID = {profissional}_{AAAA-MM-DD}_{periodo}. Como dois documentos não podem
+    // ter o mesmo ID, o mesmo horário nunca é confirmado duas vezes.
+    // Qualquer logado lê só para saber se o horário está livre (não há dado pessoal).
+    match /agenda/{slot} {
+      allow read: if logado();
+      allow create: if logado()
+        && request.resource.data.keys().hasOnly(['solicitacao_id', 'profissional_uid'])
+        && solicitacaoDepois(request.resource.data.solicitacao_id).status == 'confirmada'
+        && solicitacaoDepois(request.resource.data.solicitacao_id).cliente_uid == request.auth.uid
+        && request.resource.data.profissional_uid == solicitacaoDepois(request.resource.data.solicitacao_id).profissional_uid
+        && slot == solicitacaoDepois(request.resource.data.solicitacao_id).profissional_uid + '_'
+             + solicitacaoDepois(request.resource.data.solicitacao_id).data + '_'
+             + solicitacaoDepois(request.resource.data.solicitacao_id).periodo;
+      allow delete: if logado()
+        && solicitacaoDepois(resource.data.solicitacao_id).status == 'cancelada'
+        && (request.auth.uid == solicitacaoDepois(resource.data.solicitacao_id).cliente_uid
+            || request.auth.uid == solicitacaoDepois(resource.data.solicitacao_id).profissional_uid);
+      allow update: if false;
     }
 
     // ───────────── Catálogo de serviços ─────────────
