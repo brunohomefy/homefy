@@ -23,6 +23,9 @@ dependencies:
   google_fonts: ">=6.2.0 <8.0.0"
   intl: any   # versão definida pelo flutter_localizations
 
+  # Abrir o WhatsApp (link wa.me, grátis)
+  url_launcher: ">=6.2.0 <7.0.0"
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

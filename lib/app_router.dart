@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/meus_servicos_screen.dart';
 import 'screens/oferta_screen.dart';
+import 'screens/pedidos_screen.dart';
 import 'services/auth_service.dart';
 
 /// Rotas do app. O redirecionamento segue o estado de login:
@@ -27,5 +28,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     GoRoute(path: '/oferecer', builder: (context, state) => const OfertaScreen()),
     GoRoute(path: '/meus-servicos', builder: (context, state) => const MeusServicosScreen()),
+    GoRoute(path: '/meus-pedidos', builder: (context, state) => const PedidosScreen(souCliente: true)),
+    GoRoute(path: '/pedidos-recebidos', builder: (context, state) => const PedidosScreen(souCliente: false)),
   ],
 );

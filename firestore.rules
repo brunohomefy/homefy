@@ -139,7 +139,7 @@ service cloud.firestore {
 
       allow create: if logado()
         && request.resource.data.keys().hasOnly([
-             'cliente_uid', 'cliente_nome', 'profissional_uid', 'servico_id',
+             'cliente_uid', 'cliente_nome', 'profissional_uid', 'profissional_nome', 'servico_id',
              'servico_nome', 'categoria_id', 'variacao', 'preco_referencia',
              'data', 'periodo', 'bairro', 'observacao', 'status', 'criado_em'])
         && request.resource.data.cliente_uid == request.auth.uid
@@ -147,6 +147,7 @@ service cloud.firestore {
         && request.resource.data.status == 'pendente'
         && request.resource.data.criado_em == request.time
         && textoAte(request.resource.data.get('cliente_nome', ''), 80)
+        && textoAte(request.resource.data.get('profissional_nome', ''), 80)
         && textoAte(request.resource.data.get('servico_nome', ''), 60)
         && textoAte(request.resource.data.get('categoria_id', ''), 20)
         && textoAte(request.resource.data.get('variacao', ''), 40)

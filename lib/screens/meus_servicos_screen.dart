@@ -74,6 +74,13 @@ class _Conteudo extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
           children: [
             _ResumoPerfil(perfil: perfil),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/pedidos-recebidos'),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              icon: const Icon(Icons.inbox_outlined),
+              label: const Text('Ver pedidos recebidos'),
+            ),
             const SizedBox(height: 24),
             Text('Seus serviços', style: t.titleLarge),
             const SizedBox(height: 12),

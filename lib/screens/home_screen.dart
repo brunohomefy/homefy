@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config.dart';
 import '../models/bairros.dart';
 import '../models/categoria.dart';
 import '../models/perfil.dart';
@@ -9,10 +11,10 @@ import '../services/auth_service.dart';
 import '../services/perfil_repo.dart';
 import '../services/servicos_repo.dart';
 import '../theme/homefy_theme.dart';
-import '../widgets/formulario.dart';
-import '../widgets/homefy_logo.dart';
 import '../widgets/feedback_sheet.dart';
+import '../widgets/homefy_logo.dart';
 import '../widgets/servico_card.dart';
+import 'solicitar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -214,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _DetalheServico(servico: s),
+      builder: (_) => _DetalheServico(servico: s, bairro: _bairro),
     );
   }
 }
@@ -421,19 +423,40 @@ class _FolhaPerfil extends StatelessWidget {
             ]),
             const SizedBox(height: 20),
             const Divider(),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Meus pedidos'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/meus-pedidos');
+              },
+            ),
             StreamBuilder<PerfilUsuario?>(
               stream: PerfilRepo.instance.meu(),
               builder: (context, snap) {
                 final prof = snap.data?.ehProfissional == true;
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(prof ? Icons.storefront_outlined : Icons.work_outline_rounded),
-                  title: Text(prof ? 'Meus serviços' : 'Quero oferecer meus serviços'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    context.push(prof ? '/meus-servicos' : '/oferecer');
-                  },
-                );
+                return Column(mainAxisSize: MainAxisSize.min, children: [
+                  if (prof)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.inbox_outlined),
+                      title: const Text('Pedidos recebidos'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.push('/pedidos-recebidos');
+                      },
+                    ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(prof ? Icons.storefront_outlined : Icons.work_outline_rounded),
+                    title: Text(prof ? 'Meus serviços' : 'Quero oferecer meus serviços'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push(prof ? '/meus-servicos' : '/oferecer');
+                    },
+                  ),
+                ]);
               },
             ),
             ListTile(
@@ -570,8 +593,18 @@ class _CategoriaTile extends StatelessWidget {
 // ───────────────────────── Detalhe ─────────────────────────
 
 class _DetalheServico extends StatelessWidget {
-  const _DetalheServico({required this.servico});
+  const _DetalheServico({required this.servico, this.bairro});
   final Servico servico;
+
+  /// Bairro escolhido na Home (vai pré-preenchido no pedido).
+  final String? bairro;
+
+  /// O serviço é do próprio usuário? (não faz sentido pedir para si mesmo)
+  bool get _ehMeu {
+    final dono = servico.profissionalRef?.id;
+    final eu = kModoDemo ? 'demo' : FirebaseAuth.instance.currentUser?.uid;
+    return dono != null && dono == eu;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -654,14 +687,26 @@ class _DetalheServico extends StatelessWidget {
               style: t.bodySmall?.copyWith(color: HomefyColors.textMuted),
             ),
             const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                mostrarAviso('Em breve: escolher data, horário e profissional.');
-              },
-              icon: const Icon(Icons.event_available_rounded),
-              label: const Text('Solicitar atendimento'),
-            ),
+            if (_ehMeu)
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push('/meus-servicos');
+                },
+                icon: const Icon(Icons.storefront_outlined),
+                label: const Text('Este serviço é seu: editar'),
+              )
+            else
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => SolicitarScreen(servico: servico, bairroInicial: bairro),
+                  ));
+                },
+                icon: const Icon(Icons.event_available_rounded),
+                label: const Text('Pedir atendimento'),
+              ),
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:homefy/models/bairros.dart';
 import 'package:homefy/models/categoria.dart';
 import 'package:homefy/models/perfil.dart';
 import 'package:homefy/models/servico.dart';
+import 'package:homefy/models/solicitacao.dart';
 import 'package:homefy/services/servicos_repo.dart';
 
 void main() {
@@ -136,6 +137,49 @@ void main() {
 
     test('formata para mostrar', () {
       expect(formatarWhatsapp('5581999991234'), '(81) 99999-1234');
+    });
+  });
+
+  group('Solicitação', () {
+    test('id da agenda junta profissional, dia e período', () {
+      expect(Solicitacao.idAgenda('rafa', '2026-10-10', Periodo.tarde), 'rafa_2026-10-10_tarde');
+    });
+
+    test('lê o pedido do banco com tolerância', () {
+      final s = Solicitacao.fromMap('p1', {
+        'cliente_uid': 'ana',
+        'profissional_uid': 'rafa',
+        'servico_nome': 'Barba',
+        'data': '2026-10-10',
+        'periodo': 'noite',
+        'status': 'proposta',
+        'valor_final': 25,
+      });
+      expect(s.periodo, Periodo.noite);
+      expect(s.status, StatusPedido.proposta);
+      expect(s.valorFinal, 25);
+      expect(s.agendaId, 'rafa_2026-10-10_noite');
+      expect(Solicitacao.fromMap('x', {}).status, StatusPedido.pendente);
+    });
+
+    test('status encerrados', () {
+      expect(StatusPedido.concluida.encerrado, isTrue);
+      expect(StatusPedido.cancelada.encerrado, isTrue);
+      expect(StatusPedido.confirmada.encerrado, isFalse);
+    });
+
+    test('datas em português e próximos dias a partir de amanhã', () {
+      expect(dataIso(DateTime(2026, 3, 5)), '2026-03-05');
+      expect(dataCurta('2026-10-10'), 'sáb, 10 out');
+      final dias = proximosDias(DateTime(2026, 12, 30), n: 3);
+      expect(dias.map(dataIso), ['2026-12-31', '2027-01-01', '2027-01-02']);
+    });
+
+    test('link do WhatsApp é wa.me com mensagem', () {
+      final u = linkWhatsapp('5581999991234', 'Olá!');
+      expect(u.host, 'wa.me');
+      expect(u.path, '/5581999991234');
+      expect(u.queryParameters['text'], 'Olá!');
     });
   });
 }

@@ -240,7 +240,7 @@ test('coleções não desenhadas continuam fechadas', async () => {
 
 function pedido(db, extra = {}) {
   return {
-    cliente_uid: 'ana', cliente_nome: 'Ana Souza', profissional_uid: 'rafa',
+    cliente_uid: 'ana', cliente_nome: 'Ana Souza', profissional_uid: 'rafa', profissional_nome: 'Rafael Barbosa',
     servico_id: 's1', servico_nome: 'Barba completa', categoria_id: 'cabelo',
     variacao: 'Padrão', preco_referencia: 20, data: '2026-10-10', periodo: 'tarde',
     bairro: 'salgado', observacao: 'Portão azul', status: 'pendente',
