@@ -9,7 +9,9 @@ import '../models/perfil.dart';
 import '../models/servico.dart';
 import '../services/auth_service.dart';
 import '../services/perfil_repo.dart';
+import '../models/solicitacao.dart';
 import '../services/servicos_repo.dart';
+import '../services/solicitacoes_repo.dart';
 import '../theme/homefy_theme.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/homefy_logo.dart';
@@ -80,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SliverToBoxAdapter(
                 child: _Cabecalho(busca: _busca, bairro: _bairro, aoEscolherBairro: _escolherBairro),
               ),
+              const SliverToBoxAdapter(child: _AvisoPedidos()),
               SliverToBoxAdapter(
                 child: _Categorias(
                   selecionada: _categoria,
@@ -970,6 +973,73 @@ class _NaoAchou extends StatelessWidget {
         ),
         icon: const Icon(Icons.lightbulb_outline_rounded),
         label: Text('Não achou? Conte pra gente', style: t.labelLarge),
+      ),
+    );
+  }
+}
+
+/// Faixa no topo da Home quando há pedido esperando ação do usuário:
+/// cliente com valor para confirmar, ou profissional com pedido novo.
+class _AvisoPedidos extends StatelessWidget {
+  const _AvisoPedidos();
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = SolicitacoesRepo.instance;
+    return StreamBuilder<List<Solicitacao>>(
+      stream: repo.comoCliente(),
+      builder: (context, cli) => StreamBuilder<PerfilUsuario?>(
+        stream: PerfilRepo.instance.meu(),
+        builder: (context, perfil) {
+          final confirmar = (cli.data ?? const <Solicitacao>[])
+              .where((s) => s.status == StatusPedido.proposta)
+              .length;
+          if (perfil.data?.ehProfissional != true) {
+            return _faixa(context, confirmar, 0);
+          }
+          return StreamBuilder<List<Solicitacao>>(
+            stream: repo.comoProfissional(),
+            builder: (context, prof) {
+              final responder = (prof.data ?? const <Solicitacao>[])
+                  .where((s) => s.status == StatusPedido.pendente)
+                  .length;
+              return _faixa(context, confirmar, responder);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _faixa(BuildContext context, int confirmar, int responder) {
+    if (confirmar == 0 && responder == 0) return const SizedBox.shrink();
+    final t = Theme.of(context).textTheme;
+    final cliente = confirmar > 0;
+    final n = cliente ? confirmar : responder;
+    final texto = cliente
+        ? (n == 1 ? '1 pedido com valor para você confirmar' : '$n pedidos com valor para confirmar')
+        : (n == 1 ? '1 pedido novo para responder' : '$n pedidos novos para responder');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Material(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(HomefySpace.radiusMd),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(HomefySpace.radiusMd),
+          onTap: () => context.push(cliente ? '/meus-pedidos' : '/pedidos-recebidos'),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(children: [
+              const Icon(Icons.notifications_active_outlined, color: HomefyColors.tertiary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(texto,
+                    style: t.titleSmall?.copyWith(color: const Color(0xFF023E7D))),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: HomefyColors.tertiary),
+            ]),
+          ),
+        ),
       ),
     );
   }

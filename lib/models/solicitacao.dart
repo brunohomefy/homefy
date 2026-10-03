@@ -26,11 +26,11 @@ enum Periodo {
 
 /// Situação do pedido. A ordem das transições é garantida pelas regras do Firestore.
 enum StatusPedido {
-  pendente('pendente', 'Aguardando o profissional', Color(0xFFB7791F)),
-  proposta('proposta', 'Valor enviado: falta você confirmar', Color(0xFF0077B6)),
+  pendente('pendente', 'Aguardando resposta', Color(0xFFB7791F)),
+  proposta('proposta', 'Confirme o valor', Color(0xFF0077B6)),
   confirmada('confirmada', 'Confirmado', Color(0xFF2D6A4F)),
   concluida('concluida', 'Concluído', Color(0xFF5B6660)),
-  recusada('recusada', 'Recusado pelo profissional', Color(0xFFD90429)),
+  recusada('recusada', 'Recusado', Color(0xFFD90429)),
   cancelada('cancelada', 'Cancelado', Color(0xFF98A29C));
 
   const StatusPedido(this.id, this.rotuloCliente, this.cor);
@@ -40,8 +40,8 @@ enum StatusPedido {
 
   /// O mesmo status visto pelo profissional.
   String get rotuloProfissional => switch (this) {
-        pendente => 'Novo pedido: responda',
-        proposta => 'Aguardando o cliente confirmar',
+        pendente => 'Responda o pedido',
+        proposta => 'Aguardando o cliente',
         _ => rotuloCliente,
       };
 
