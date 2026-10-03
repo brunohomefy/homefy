@@ -99,6 +99,16 @@ Ver `docs/RELATORIO_TESTES_04.md`.
 - **Avaliações:** de 1 a 5 estrelas, mais um comentário opcional, depois de "concluído". Uma por atendimento, sem edição. A média e os comentários aparecem no detalhe do serviço.
 - **Testes:** regras 45/45; app 23/23.
 
+## 6b. Design v2 (03/10/2026)
+
+- Nova logo (casa com a porta em amarelo-sol), paleta mandacaru/sol e fontes Bricolage Grotesque + Figtree.
+- Barra de navegação Início · Pedidos · Conta; a aba Conta substitui o menu da bolinha.
+- Categorias em grade 2×2 com contagem de serviços; cabeçalho com "Atendimento em".
+- Páginas de termos e privacidade com botão "Voltar ao Homefy".
+- App instalável no celular ("Adicionar à tela inicial"), com ícone e tela de abertura.
+- Guia da marca publicado como página (artefato "Marca Homefy").
+- Arquivos da marca na pasta `marca/`.
+
 ## 7. Pendências do Bruno
 
 1. Publicar `firestore.rules` (uma vez só; já inclui todas as camadas).

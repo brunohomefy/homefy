@@ -21,6 +21,13 @@ Dono: Bruno. Fala português do Brasil, sem jargão. Cliente e profissional usam
   - build web + demo, prints automáticos das telas na branch `auditoria-telas` (`tools/auditoria/telas.mjs`).
 - Não é preciso Flutter instalado no PC: o CI compila e testa. Só instale se o Bruno pedir.
 
+## Identidade visual (v2, 03/10/2026)
+- Símbolo: casa em traço branco com a **porta em amarelo-sol** sobre quadrado verde (`marca/`, `lib/widgets/homefy_logo.dart`). Nome sempre em minúsculas: "homefy".
+- Cores: mandacaru `#13604A`, mandacaru escuro `#0B3D2F`, sol `#F5B82E` (só porta, estrelas, um destaque), menta `#DDF1E6`, fundo `#F4F6F3`, tinta `#16201B` (`lib/theme/homefy_theme.dart`).
+- Fontes: Bricolage Grotesque (títulos) + Figtree (texto).
+- Navegação: barra de baixo Início · Pedidos · Conta (`StatefulShellRoute` em `app_router.dart`, `principal_screen.dart`, `conta_screen.dart`). Telas fora das abas sempre têm botão de voltar.
+- App instalável (PWA): `web/index.html` e `web/manifest.json`, com ícones em `web/icons/` (gerados a partir do símbolo).
+
 ## Modelo de dados (Firestore)
 - `usuarios/{uid}`: perfil **público** (nome, eh_profissional, categorias, subtipos, bairros, atende_toda_cidade, descricao). **Nunca** e-mail, telefone, CPF ou endereço (LGPD).
 - `usuarios/{uid}/privado/contato`: `whatsapp` (`55` + DDD + número). Só o dono lê.
