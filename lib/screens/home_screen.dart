@@ -84,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SliverToBoxAdapter(
                 child: _Cabecalho(busca: _busca, bairro: _bairro, aoEscolherBairro: _escolherBairro),
               ),
+              if (kModoDemo) const SliverToBoxAdapter(child: _FaixaDemo()),
               const SliverToBoxAdapter(child: _AvisoPedidos()),
               SliverToBoxAdapter(
                 child: _Categorias(
@@ -1051,6 +1052,39 @@ class _AvisoPedidos extends StatelessWidget {
             ]),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Só na versão de demonstração: explica que os dados são de exemplo.
+class _FaixaDemo extends StatelessWidget {
+  const _FaixaDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E6),
+          borderRadius: BorderRadius.circular(HomefySpace.radiusMd),
+          border: Border.all(color: const Color(0xFFF4D58D)),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Icon(Icons.science_outlined, color: Color(0xFF8A6100)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Versão de demonstração: dados de exemplo, nada é salvo (ao recarregar a página, tudo volta ao início). '
+              'Experimente: pedir um serviço, ver "Meus pedidos" no menu do perfil (B), confirmar e avaliar; '
+              'ou "Quero oferecer meus serviços".',
+              style: t.bodySmall?.copyWith(color: const Color(0xFF5C4100), height: 1.4),
+            ),
+          ),
+        ]),
       ),
     );
   }
