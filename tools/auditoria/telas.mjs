@@ -126,7 +126,9 @@ await passo('avaliar', async () => {
 await passo('detalhe_com_notas', async () => {
   await abrir('/home'); await rolar(500); await tocar('Lavagem completa'); await rolar(400); await foto('detalhe_notas');
 });
-await passo('termos', async () => { await abrir('/login'); await foto('login_termos'); });
+await passo('termos', async () => {
+  await page.goto(base + 'privacidade.html'); await page.waitForTimeout(800); await foto('pagina_privacidade');
+});
 await passo('pedidos_recebidos', async () => {
   await abrir('/pedidos-recebidos'); await foto('pedidos_recebidos');
   await tocar('Faxina residencial'); await foto('pedido_responder');
@@ -134,8 +136,7 @@ await passo('pedidos_recebidos', async () => {
 });
 await passo('meus_servicos_rota', async () => { await abrir('/meus-servicos'); await foto('meus_servicos_rota'); });
 await passo('conte_experiencia', async () => {
-  await abrir('/home'); await tocar('B', { exato: true }).catch(() => {});
-  await foto('folha_perfil');
+  await abrir('/conta'); await foto('aba_conta');
 });
 
 fs.writeFileSync(`${saida}/log.txt`, log.join('\n') + '\n');

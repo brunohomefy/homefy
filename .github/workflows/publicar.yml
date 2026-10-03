@@ -56,8 +56,9 @@ jobs:
         run: |
           flutter build web --release --dart-define=HOMEFY_DEMO=true \
             --base-href "/${{ github.event.repository.name }}/demo/" --output build/demo
+          cp paginas/* build/demo/  # Política de Privacidade e Termos de Uso (também na demo)
           cp -r build/demo build/web/demo
-          cp paginas/* build/web/   # Política de Privacidade e Termos de Uso
+          cp paginas/* build/web/
 
       # Prints automáticos das telas (versão de demonstração), gravados na branch
       # auditoria-telas. Não bloqueia a publicação se falhar.

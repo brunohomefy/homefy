@@ -5,29 +5,31 @@ import 'package:google_fonts/google_fonts.dart';
 class HomefyColors {
   HomefyColors._();
 
-  // Marca
-  static const primary = Color(0xFF2D6A4F); // verde principal
-  static const primaryDark = Color(0xFF1B4332);
-  static const secondary = Color(0xFF52B788); // verde claro
-  static const mint = Color(0xFFD8F3DC); // verde bem suave (fundos)
-  static const tertiary = Color(0xFF0077B6); // azul de destaque
+  // Marca (identidade v2, 03/10/2026)
+  static const primary = Color(0xFF13604A); // verde-mandacaru: confiança
+  static const primaryDark = Color(0xFF0B3D2F);
+  static const secondary = Color(0xFF3E9C77);
+  static const mint = Color(0xFFDDF1E6); // verde bem suave (fundos)
+  static const sol = Color(0xFFF5B82E); // amarelo-sol do agreste: a porta da logo
+  static const solSuave = Color(0xFFFFF3D6);
+  static const tertiary = Color(0xFF0077B6); // azul de avisos
 
   // Neutros
-  static const background = Color(0xFFF6F8F7);
+  static const background = Color(0xFFF4F6F3);
   static const surface = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE6EBE8);
-  static const text = Color(0xFF14201A);
-  static const textSecondary = Color(0xFF5B6660);
-  static const textMuted = Color(0xFF98A29C);
+  static const border = Color(0xFFE3E8E4);
+  static const text = Color(0xFF16201B);
+  static const textSecondary = Color(0xFF55615A);
+  static const textMuted = Color(0xFF8E9A93);
 
   // Estados
-  static const error = Color(0xFFD90429);
-  static const warning = Color(0xFFFFB703);
+  static const error = Color(0xFFC81D25);
+  static const warning = Color(0xFFB7791F);
 
   static const brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1B4332), primary, Color(0xFF40916C)],
+    colors: [primaryDark, primary],
   );
 }
 
@@ -74,8 +76,8 @@ ThemeData buildHomefyTheme() {
     scaffoldBackgroundColor: HomefyColors.background,
   );
 
-  final body = GoogleFonts.interTextTheme(base.textTheme);
-  final display = GoogleFonts.plusJakartaSansTextTheme(base.textTheme);
+  final body = GoogleFonts.figtreeTextTheme(base.textTheme);
+  final display = GoogleFonts.bricolageGroteskTextTheme(base.textTheme);
 
   final textTheme = body.copyWith(
     displaySmall: display.displaySmall?.copyWith(
@@ -145,5 +147,42 @@ ThemeData buildHomefyTheme() {
       ),
     ),
     dividerTheme: const DividerThemeData(color: HomefyColors.border, thickness: 1),
+    appBarTheme: AppBarTheme(
+      backgroundColor: HomefyColors.background,
+      surfaceTintColor: Colors.transparent,
+      foregroundColor: HomefyColors.text,
+      elevation: 0,
+      scrolledUnderElevation: 0.5,
+      titleTextStyle: textTheme.titleLarge,
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: HomefyColors.surface,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: HomefyColors.mint,
+      height: 68,
+      labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(
+            fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+            color: s.contains(WidgetState.selected) ? HomefyColors.primary : HomefyColors.textSecondary,
+          )),
+      iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
+            color: s.contains(WidgetState.selected) ? HomefyColors.primary : HomefyColors.textSecondary,
+          )),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: HomefyColors.surface,
+      selectedColor: HomefyColors.mint,
+      side: const BorderSide(color: HomefyColors.border),
+      labelStyle: textTheme.labelLarge?.copyWith(color: HomefyColors.text),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: HomefyColors.primary,
+        minimumSize: const Size.fromHeight(52),
+        side: const BorderSide(color: HomefyColors.border, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(HomefySpace.radiusMd)),
+        textStyle: textTheme.labelLarge?.copyWith(fontSize: 15),
+      ),
+    ),
   );
 }

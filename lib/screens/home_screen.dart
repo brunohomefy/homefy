@@ -13,20 +13,23 @@ import '../models/solicitacao.dart';
 import '../services/servicos_repo.dart';
 import '../services/solicitacoes_repo.dart';
 import '../theme/homefy_theme.dart';
-import '../widgets/auth_layout.dart' show abrirPagina;
 import '../widgets/avaliacoes_widgets.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/homefy_logo.dart';
 import '../widgets/servico_card.dart';
 import 'solicitar_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+/// Aba "Início": a vitrine de serviços.
+class VitrineAba extends StatefulWidget {
+  const VitrineAba({super.key});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<VitrineAba> createState() => _VitrineAbaState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _VitrineAbaState extends State<VitrineAba> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late final Stream<List<Servico>> _servicos = const ServicosRepo().ativos();
   final _busca = TextEditingController();
   Categoria? _categoria;
@@ -75,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -86,10 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (kModoDemo) const SliverToBoxAdapter(child: _FaixaDemo()),
               const SliverToBoxAdapter(child: _AvisoPedidos()),
-              SliverToBoxAdapter(
-                child: _Categorias(
-                  selecionada: _categoria,
-                  aoSelecionar: (c) => setState(() => _categoria = c == _categoria ? null : c),
+              StreamBuilder<List<Servico>>(
+                stream: _servicos,
+                builder: (context, snap) => SliverToBoxAdapter(
+                  child: _Categorias(
+                    selecionada: _categoria,
+                    servicos: snap.data ?? const [],
+                    aoSelecionar: (c) => setState(() => _categoria = c == _categoria ? null : c),
+                  ),
                 ),
               ),
               StreamBuilder<List<Servico>>(
@@ -109,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SliverToBoxAdapter(child: _ConviteProfissional()),
               SliverToBoxAdapter(
-                child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
+                child: SizedBox(height: 32 + MediaQuery.paddingOf(context).bottom),
               ),
             ],
           ),
@@ -239,87 +247,57 @@ class _Cabecalho extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final topo = MediaQuery.paddingOf(context).top;
+    final branco70 = Colors.white.withValues(alpha: 0.72);
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: HomefyColors.brandGradient,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(HomefySpace.radiusXl)),
+        color: HomefyColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Positioned(
-            right: -50,
-            top: -30,
-            child: Container(
-              width: 190,
-              height: 190,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(24, topo + 16, 24, 24),
-            child: ListenableBuilder(
-              listenable: AuthService.instance,
-              builder: (context, _) {
-                final nome = AuthService.instance.primeiroNome;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const HomefyMarca(claro: true, tamanho: 34),
-                        const Spacer(),
-                        _BotaoPerfil(nome: nome),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      nome == null ? 'Olá!' : 'Olá, $nome!',
-                      style: t.bodyLarge?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text('Do que você precisa hoje?',
-                        style: t.headlineSmall?.copyWith(color: Colors.white)),
-                    const SizedBox(height: 20),
-                    _CampoBusca(controller: busca),
-                    const SizedBox(height: 12),
-                    Material(
-                      color: Colors.white.withValues(alpha: bairro == null ? 0.12 : 0.22),
-                      borderRadius: BorderRadius.circular(99),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(99),
-                        onTap: aoEscolherBairro,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 7, 8, 7),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.location_on_outlined, size: 16, color: Colors.white),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                bairro == null
-                                    ? 'Onde será o atendimento? Escolha o bairro'
-                                    : '${Bairro.nomeDe(bairro!)}, Caruaru',
-                                overflow: TextOverflow.ellipsis,
-                                style: t.bodySmall?.copyWith(
-                                    color: Colors.white, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            const Icon(Icons.expand_more_rounded, size: 18, color: Colors.white),
-                          ]),
+      padding: EdgeInsets.fromLTRB(20, topo + 14, 20, 22),
+      child: ListenableBuilder(
+        listenable: AuthService.instance,
+        builder: (context, _) {
+          final nome = AuthService.instance.primeiroNome;
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Linha 1: onde será o atendimento (como "entregar em" dos apps de entrega)
+            Row(children: [
+              Expanded(
+                child: InkWell(
+                  onTap: aoEscolherBairro,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Atendimento em', style: t.labelMedium?.copyWith(color: branco70)),
+                      Row(children: [
+                        const Icon(Icons.location_on_rounded, size: 18, color: HomefyColors.sol),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            bairro == null ? 'Caruaru · escolha o bairro' : '${Bairro.nomeDe(bairro!)}, Caruaru',
+                            overflow: TextOverflow.ellipsis,
+                            style: t.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+                        const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
+                      ]),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const HomefyLogo(tamanho: 40, claro: true),
+            ]),
+            const SizedBox(height: 22),
+            Text(nome == null ? 'Olá!' : 'Olá, $nome', style: t.bodyLarge?.copyWith(color: branco70)),
+            const SizedBox(height: 2),
+            Text('Do que sua casa precisa hoje?',
+                style: t.headlineSmall?.copyWith(color: Colors.white, height: 1.15)),
+            const SizedBox(height: 18),
+            _CampoBusca(controller: busca),
+          ]);
+        },
       ),
     );
   }
@@ -365,175 +343,37 @@ class _CampoBusca extends StatelessWidget {
   }
 }
 
-class _BotaoPerfil extends StatelessWidget {
-  const _BotaoPerfil({required this.nome});
-  final String? nome;
-
-  @override
-  Widget build(BuildContext context) {
-    final inicial = (nome?.isNotEmpty ?? false) ? nome![0].toUpperCase() : null;
-    return Material(
-      color: Colors.white.withValues(alpha: 0.16),
-      shape: CircleBorder(side: BorderSide(color: Colors.white.withValues(alpha: 0.3))),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => showModalBottomSheet<void>(
-          context: context,
-          builder: (_) => const _FolhaPerfil(),
-        ),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Center(
-            child: inicial != null
-                ? Text(inicial,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white))
-                : const Icon(Icons.person_outline_rounded, color: Colors.white),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FolhaPerfil extends StatelessWidget {
-  const _FolhaPerfil();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-    final auth = AuthService.instance;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: HomefyColors.mint,
-                child: Text(
-                  (auth.primeiroNome ?? '?')[0].toUpperCase(),
-                  style: t.titleLarge?.copyWith(color: HomefyColors.primary),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(auth.primeiroNome ?? 'Minha conta', style: t.titleMedium),
-                  if (auth.email != null) Text(auth.email!, style: t.bodySmall),
-                ]),
-              ),
-            ]),
-            const SizedBox(height: 20),
-            const Divider(),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.receipt_long_outlined),
-              title: const Text('Meus pedidos'),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/meus-pedidos');
-              },
-            ),
-            StreamBuilder<PerfilUsuario?>(
-              stream: PerfilRepo.instance.meu(),
-              builder: (context, snap) {
-                final prof = snap.data?.ehProfissional == true;
-                return Column(mainAxisSize: MainAxisSize.min, children: [
-                  if (prof)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.inbox_outlined),
-                      title: const Text('Pedidos recebidos'),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        context.push('/pedidos-recebidos');
-                      },
-                    ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(prof ? Icons.storefront_outlined : Icons.work_outline_rounded),
-                    title: Text(prof ? 'Meus serviços' : 'Quero oferecer meus serviços'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.push(prof ? '/meus-servicos' : '/oferecer');
-                    },
-                  ),
-                ]);
-              },
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.chat_bubble_outline_rounded),
-              title: const Text('Conte sua experiência'),
-              subtitle: const Text('Sugestões, ideias, o que melhorar'),
-              onTap: () {
-                Navigator.of(context).pop();
-                abrirFeedback(context, tipo: TipoFeedback.experiencia);
-              },
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Privacidade e termos'),
-              onTap: () => abrirPagina(kUrlPrivacidade),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.logout_rounded, color: HomefyColors.error),
-              title: Text('Sair',
-                  style: t.bodyLarge?.copyWith(
-                      color: HomefyColors.error, fontWeight: FontWeight.w600)),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await AuthService.instance.sair();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ───────────────────────── Categorias ─────────────────────────
 
 class _Categorias extends StatelessWidget {
-  const _Categorias({required this.selecionada, required this.aoSelecionar});
+  const _Categorias({required this.selecionada, required this.servicos, required this.aoSelecionar});
   final Categoria? selecionada;
+  final List<Servico> servicos;
   final ValueChanged<Categoria> aoSelecionar;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
-          child: Text('Categorias', style: t.titleLarge),
-        ),
-        SizedBox(
-          height: 112,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemCount: Categoria.todas.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, i) {
-              final c = Categoria.todas[i];
-              return _CategoriaTile(
-                categoria: c,
-                selecionada: c == selecionada,
-                aoTocar: () => aoSelecionar(c),
-              );
-            },
+    int quantos(Categoria c) => servicos.where((s) => s.categoriaMvp?.id == c.id).length;
+    final cats = Categoria.todas;
+    Widget tile(Categoria c) => Expanded(
+          child: _CategoriaTile(
+            categoria: c,
+            quantidade: quantos(c),
+            selecionada: c == selecionada,
+            aoTocar: () => aoSelecionar(c),
           ),
-        ),
-      ],
+        );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('O que você procura?', style: t.titleLarge),
+        const SizedBox(height: 12),
+        // 4 categorias: grade 2×2 cabe inteira na tela, sem rolagem lateral.
+        Row(children: [tile(cats[0]), const SizedBox(width: 12), tile(cats[1])]),
+        const SizedBox(height: 12),
+        Row(children: [tile(cats[2]), const SizedBox(width: 12), tile(cats[3])]),
+      ]),
     );
   }
 }
@@ -541,10 +381,12 @@ class _Categorias extends StatelessWidget {
 class _CategoriaTile extends StatelessWidget {
   const _CategoriaTile({
     required this.categoria,
+    required this.quantidade,
     required this.selecionada,
     required this.aoTocar,
   });
   final Categoria categoria;
+  final int quantidade;
   final bool selecionada;
   final VoidCallback aoTocar;
 
@@ -552,48 +394,55 @@ class _CategoriaTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final cor = categoria.cor;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-      width: 104,
-      decoration: BoxDecoration(
-        color: selecionada ? cor : HomefyColors.surface,
-        borderRadius: BorderRadius.circular(HomefySpace.radiusLg),
-        boxShadow: homefyShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(HomefySpace.radiusLg),
-          onTap: aoTocar,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+    return Semantics(
+      selected: selecionada,
+      button: true,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 96,
+        decoration: BoxDecoration(
+          color: selecionada ? cor : cor.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selecionada ? cor : cor.withValues(alpha: 0.16)),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: aoTocar,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+              child: Row(children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(categoria.rotulo,
+                          maxLines: 2,
+                          style: t.titleSmall?.copyWith(
+                            height: 1.15,
+                            color: selecionada ? Colors.white : HomefyColors.text,
+                          )),
+                      Text(
+                        quantidade == 0 ? 'em breve' : (quantidade == 1 ? '1 serviço' : '$quantidade serviços'),
+                        style: t.labelSmall?.copyWith(
+                          color: selecionada ? Colors.white.withValues(alpha: 0.85) : HomefyColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: selecionada
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : cor.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(12),
+                    color: selecionada ? Colors.white.withValues(alpha: 0.2) : Colors.white,
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(categoria.icone,
-                      size: 22, color: selecionada ? Colors.white : cor),
+                  child: Icon(categoria.icone, size: 22, color: selecionada ? Colors.white : cor),
                 ),
-                Text(
-                  categoria.rotulo,
-                  maxLines: 2,
-                  style: t.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                    color: selecionada ? Colors.white : HomefyColors.text,
-                  ),
-                ),
-              ],
+              ]),
             ),
           ),
         ),
@@ -745,38 +594,39 @@ class _ConviteProfissional extends StatelessWidget {
   Widget _cartao(BuildContext context, bool profissional) {
     final t = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: HomefyColors.mint,
-          borderRadius: BorderRadius.circular(HomefySpace.radiusLg),
+          color: HomefyColors.primaryDark,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(profissional ? 'Sua vitrine' : 'Você é profissional?',
-                  style: t.titleMedium?.copyWith(color: HomefyColors.primaryDark)),
+              Text(profissional ? 'Sua vitrine' : 'Trabalha com isso?',
+                  style: t.titleMedium?.copyWith(color: Colors.white)),
               const SizedBox(height: 4),
               Text(
                   profissional
                       ? 'Cadastre, edite ou esconda seus serviços quando quiser.'
-                      : 'Com a mesma conta você pode oferecer seus serviços em Caruaru.',
-                  style: t.bodySmall?.copyWith(color: HomefyColors.primaryDark, height: 1.4)),
-              const SizedBox(height: 12),
-              FilledButton.tonal(
+                      : 'Ofereça seus serviços para clientes de Caruaru, com a mesma conta. É grátis.',
+                  style: t.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.78), height: 1.4)),
+              const SizedBox(height: 14),
+              FilledButton(
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 40),
-                  backgroundColor: HomefyColors.primary,
-                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 42),
+                  backgroundColor: HomefyColors.sol,
+                  foregroundColor: HomefyColors.primaryDark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
                 ),
                 onPressed: () => context.push(profissional ? '/meus-servicos' : '/oferecer'),
                 child: Text(profissional ? 'Meus serviços' : 'Quero oferecer'),
               ),
             ]),
           ),
-          const SizedBox(width: 12),
-          const HomefyLogo(tamanho: 64),
+          const SizedBox(width: 14),
+          const HomefyLogo(tamanho: 64, claro: true),
         ]),
       ),
     );

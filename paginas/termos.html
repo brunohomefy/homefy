@@ -4,11 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Termos de Uso · Homefy</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600&display=swap">
 <link rel="stylesheet" href="paginas.css">
 </head>
 <body>
+<header class="barra">
+  <a class="voltar" href="./" id="voltar" aria-label="Voltar ao Homefy">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Voltar ao Homefy
+  </a>
+  <svg class="simbolo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="116" fill="#fff" fill-opacity=".14"/><g fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"><path d="M118 262 L256 140 L394 262"/><path d="M164 232 V382 H206"/><path d="M306 382 H348 V232"/></g><path d="M222 400 V322 a34 34 0 0 1 68 0 V400 Z" fill="#F5B82E"/></svg>
+</header>
+<script>
+  // Aberta pelo app em outra aba: "Voltar" fecha esta aba. Senão, volta na história ou vai ao app.
+  document.getElementById('voltar').addEventListener('click', function (e) {
+    if (window.opener) { e.preventDefault(); window.close(); }
+    else if (history.length > 1) { e.preventDefault(); history.back(); }
+  });
+</script>
 <main>
-<p class="marca">Homefy</p>
 <h1>Termos de Uso</h1>
 <p class="data">Versão 1 · 03/10/2026 · fase de testes (piloto em Caruaru-PE)</p>
 

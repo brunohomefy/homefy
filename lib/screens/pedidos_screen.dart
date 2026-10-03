@@ -13,8 +13,11 @@ import 'servico_editor_screen.dart' show lerPreco;
 
 /// Lista de pedidos. [souCliente] = "Meus pedidos"; senão "Pedidos recebidos".
 class PedidosScreen extends StatelessWidget {
-  const PedidosScreen({super.key, required this.souCliente});
+  const PedidosScreen({super.key, required this.souCliente, this.emAba = false});
   final bool souCliente;
+
+  /// Dentro da barra de baixo (aba "Pedidos"): sem botão de voltar.
+  final bool emAba;
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +25,14 @@ class PedidosScreen extends StatelessWidget {
     final repo = SolicitacoesRepo.instance;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
-        ),
+        automaticallyImplyLeading: false,
+        leading: emAba
+            ? null
+            : IconButton(
+                tooltip: 'Voltar',
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+              ),
         title: Text(souCliente ? 'Meus pedidos' : 'Pedidos recebidos'),
       ),
       body: Center(

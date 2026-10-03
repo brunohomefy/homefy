@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- O CI troca $FLUTTER_BASE_HREF pelo caminho certo (app ou /demo/). -->
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Cabelo, manicure, lavagem de carro e limpeza: profissionais de Caruaru que vão até você.">
+  <meta name="theme-color" content="#13604A">
+
+  <!-- Instalar como app no celular ("Adicionar à tela inicial") -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Homefy">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <title>Homefy · serviços em casa em Caruaru</title>
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #13604A; }
+    #abertura {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      background: #13604A; transition: opacity .35s ease;
+    }
+    #abertura svg { width: 96px; height: 96px; }
+    #abertura .porta { transform-origin: 256px 400px; animation: porta 1.2s ease-in-out infinite alternate; }
+    @keyframes porta { from { transform: scaleY(.55); } to { transform: scaleY(1); } }
+    #abertura p {
+      margin: 0; color: rgba(255,255,255,.85);
+      font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { #abertura .porta { animation: none; } }
+  </style>
+</head>
+<body>
+  <!-- Abertura enquanto o app carrega: a porta da logo "abre". Some no primeiro quadro do app. -->
+  <div id="abertura" aria-label="Carregando o Homefy">
+    <svg viewBox="0 0 512 512" aria-hidden="true">
+      <g fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M118 262 L256 140 L394 262"/><path d="M164 232 V382 H206"/><path d="M306 382 H348 V232"/>
+      </g>
+      <path class="porta" d="M222 400 V322 a34 34 0 0 1 68 0 V400 Z" fill="#F5B82E"/>
+    </svg>
+    <p>Homefy</p>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var a = document.getElementById('abertura');
+      if (!a) return;
+      a.style.opacity = '0';
+      setTimeout(function () { a.remove(); }, 400);
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

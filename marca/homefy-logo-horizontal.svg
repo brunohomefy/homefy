@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 360" role="img" aria-label="Homefy">
+  <g transform="translate(24 24) scale(0.609)">
+    <rect width="512" height="512" rx="116" fill="#13604A"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M118 262 L256 140 L394 262"/><path d="M164 232 V382 H206"/><path d="M306 382 H348 V232"/>
+    </g>
+    <path d="M222 400 V322 a34 34 0 0 1 68 0 V400 Z" fill="#F5B82E"/>
+  </g>
+  <text x="380" y="238" font-family="'Bricolage Grotesque', 'Plus Jakarta Sans', Arial, sans-serif" font-size="190" font-weight="800" letter-spacing="-6" fill="#13604A">homefy</text>
+</svg>

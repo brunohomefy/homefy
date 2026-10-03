@@ -18,9 +18,8 @@ class HomefyLogo extends StatelessWidget {
       width: tamanho,
       height: tamanho,
       decoration: BoxDecoration(
-        gradient: claro ? null : HomefyColors.brandGradient,
-        color: claro ? Colors.white.withValues(alpha: 0.16) : null,
-        borderRadius: BorderRadius.circular(tamanho * 0.3),
+        color: claro ? Colors.white.withValues(alpha: 0.14) : HomefyColors.primary,
+        borderRadius: BorderRadius.circular(tamanho * 0.227),
         border: claro ? Border.all(color: Colors.white.withValues(alpha: 0.28)) : null,
         boxShadow: claro
             ? null
@@ -37,34 +36,40 @@ class HomefyLogo extends StatelessWidget {
   }
 }
 
+/// Casa em traço branco com a porta em amarelo-sol (identidade v2).
+/// Mesma geometria de marca/homefy-simbolo.svg (grade de 512).
 class _CasaCheckPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final s = size.width;
+    final k = size.width / 512;
+    Offset p(double x, double y) => Offset(x * k, y * k);
     final traco = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = s * 0.075
+      ..strokeWidth = 36 * k
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
+    Path linha(List<Offset> pts) {
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final q in pts.skip(1)) {
+        path.lineTo(q.dx, q.dy);
+      }
+      return path;
+    }
 
-    // Casa
-    final casa = Path()
-      ..moveTo(s * 0.24, s * 0.48)
-      ..lineTo(s * 0.50, s * 0.25)
-      ..lineTo(s * 0.76, s * 0.48)
-      ..moveTo(s * 0.31, s * 0.43)
-      ..lineTo(s * 0.31, s * 0.74)
-      ..lineTo(s * 0.69, s * 0.74)
-      ..lineTo(s * 0.69, s * 0.43);
-    canvas.drawPath(casa, traco);
+    canvas
+      ..drawPath(linha([p(118, 262), p(256, 140), p(394, 262)]), traco)
+      ..drawPath(linha([p(164, 232), p(164, 382), p(206, 382)]), traco)
+      ..drawPath(linha([p(306, 382), p(348, 382), p(348, 232)]), traco);
 
-    // Check dentro da casa
-    final check = Path()
-      ..moveTo(s * 0.40, s * 0.57)
-      ..lineTo(s * 0.47, s * 0.64)
-      ..lineTo(s * 0.60, s * 0.50);
-    canvas.drawPath(check, traco..color = const Color(0xFFB7E4C7));
+    // Porta: o que o Homefy faz é trazer alguém de confiança até ela.
+    final porta = Path()
+      ..moveTo(222 * k, 400 * k)
+      ..lineTo(222 * k, 322 * k)
+      ..arcToPoint(p(290, 322), radius: Radius.circular(34 * k))
+      ..lineTo(290 * k, 400 * k)
+      ..close();
+    canvas.drawPath(porta, Paint()..color = HomefyColors.sol);
   }
 
   @override
@@ -85,9 +90,11 @@ class HomefyMarca extends StatelessWidget {
         HomefyLogo(tamanho: tamanho, claro: claro),
         const SizedBox(width: 10),
         Text(
-          'Homefy',
+          'homefy',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.8,
+                fontSize: tamanho * 0.72,
                 color: claro ? Colors.white : HomefyColors.primary,
               ),
         ),
