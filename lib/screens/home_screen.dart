@@ -79,8 +79,11 @@ class _VitrineAbaState extends State<VitrineAba> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Uma única escuta da lista de serviços, usada pelas categorias e pela vitrine.
     return Scaffold(
-      body: Center(
+      body: StreamBuilder<List<Servico>>(
+        stream: _servicos,
+        builder: (context, snap) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: CustomScrollView(
@@ -90,20 +93,14 @@ class _VitrineAbaState extends State<VitrineAba> with AutomaticKeepAliveClientMi
               ),
               if (kModoDemo) const SliverToBoxAdapter(child: _FaixaDemo()),
               const SliverToBoxAdapter(child: _AvisoPedidos()),
-              StreamBuilder<List<Servico>>(
-                stream: _servicos,
-                builder: (context, snap) => SliverToBoxAdapter(
-                  child: _Categorias(
-                    selecionada: _categoria,
-                    servicos: snap.data ?? const [],
-                    aoSelecionar: (c) => setState(() => _categoria = c == _categoria ? null : c),
-                  ),
+              SliverToBoxAdapter(
+                child: _Categorias(
+                  selecionada: _categoria,
+                  servicos: snap.data ?? const [],
+                  aoSelecionar: (c) => setState(() => _categoria = c == _categoria ? null : c),
                 ),
               ),
-              StreamBuilder<List<Servico>>(
-                stream: _servicos,
-                builder: (context, snap) => _listaServicos(context, snap),
-              ),
+              _listaServicos(context, snap),
               SliverToBoxAdapter(
                 child: _NaoAchou(
                   aoTocar: () => abrirFeedback(
@@ -121,6 +118,7 @@ class _VitrineAbaState extends State<VitrineAba> with AutomaticKeepAliveClientMi
               ),
             ],
           ),
+        ),
         ),
       ),
     );

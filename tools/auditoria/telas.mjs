@@ -81,7 +81,7 @@ async function passo(nome, fn) {
 await passo('home', async () => { await abrir('/home'); await foto('home_topo'); await rolar(700); await foto('home_lista'); await rolar(1400); await foto('home_fim'); });
 await passo('bairro', async () => {
   await abrir('/home');
-  await tocar('Onde será o atendimento');
+  await tocar('Atendimento em');
   await foto('escolher_bairro');
   await buscar('Procurar bairro', 'salga');
   await tocar('Salgado', { exato: true });
