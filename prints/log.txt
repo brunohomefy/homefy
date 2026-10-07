@@ -1,0 +1,44 @@
+print: ../../prints/01_home_topo.png
+print: ../../prints/02_home_lista.png
+print: ../../prints/03_home_fim.png
+ok: home
+print: ../../prints/04_escolher_bairro.png
+print: ../../prints/05_home_salgado.png
+ok: bairro
+print: ../../prints/06_detalhe_faixas.png
+ok: detalhe_faixas
+print: ../../prints/07_nao_achou.png
+ok: nao_achou
+print: ../../prints/08_oferta_1_vazio.png
+print: ../../prints/09_oferta_1_erro.png
+print: ../../prints/10_oferta_1_marcado.png
+print: ../../prints/11_oferta_2_bairros.png
+print: ../../prints/12_oferta_2_toda_cidade.png
+print: ../../prints/13_oferta_3_contato.png
+print: ../../prints/14_oferta_4_revisao.png
+FALHOU: oferta: não achei: Começar a oferecer
+print: ../../prints/15_falha_oferta.png
+FALHOU: novo_servico: não achei: Cadastrar serviço
+print: ../../prints/16_falha_novo_servico.png
+print: ../../prints/17_pedir_topo.png
+FALHOU: pedir_atendimento: não achei: Enviar pedido
+print: ../../prints/18_falha_pedir_atendimento.png
+print: ../../prints/19_meus_pedidos.png
+print: ../../prints/20_pedido_proposta.png
+print: ../../prints/21_pedido_confirmado.png
+ok: meus_pedidos
+print: ../../prints/22_avaliar_vazio.png
+print: ../../prints/23_avaliar_feito.png
+ok: avaliar
+print: ../../prints/24_detalhe_notas.png
+ok: detalhe_com_notas
+print: ../../prints/25_pagina_privacidade.png
+ok: termos
+print: ../../prints/26_pedidos_recebidos.png
+print: ../../prints/27_pedido_responder.png
+print: ../../prints/28_pedido_respondido.png
+ok: pedidos_recebidos
+print: ../../prints/29_meus_servicos_rota.png
+ok: meus_servicos_rota
+print: ../../prints/30_aba_conta.png
+ok: conte_experiencia
