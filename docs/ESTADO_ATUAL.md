@@ -109,6 +109,22 @@ Ver `docs/RELATORIO_TESTES_04.md`.
 - Guia da marca publicado como página (artefato "Marca Homefy").
 - Arquivos da marca na pasta `marca/`.
 
+## 6c. Próximo: identidade nova escolhida pelo Bruno (07/10/2026)
+
+O Bruno preferiu a arte feita com a Sabrina (imagens de divulgação geradas por IA): **casa branca com check** num quadrado verde arredondado, nome "Homefy" em verde-escuro e negrito, fundo branco, cartões limpos e ícones em círculos verde-claro. Ele vai mandar o arquivo da logo.
+
+**Plano combinado (próximo chat, com as imagens anexadas):**
+1. Redesenhar a logo em vetor a partir do arquivo do Bruno: símbolo, versão com nome, ícones do app/PWA e favicon.
+2. Ajustar cores e visual do app para o das artes: verde mais vivo, fundo branco, cartões e ícones em círculos.
+3. Telas inspiradas nas artes, com conteúdo verdadeiro: categorias em linha de ícones; cartões de profissional com inicial (foto exige Storage, que é pago), estrelas e "a partir de R$"; página do profissional com botão de pedir.
+4. Materiais de divulgação com textos honestos.
+
+**O que NÃO aproveitar das artes** (promessas falsas ou fora do escopo):
+- "Profissionais verificados" (não há verificação) → usar "avaliados por clientes".
+- Números inventados ("+10 mil profissionais", "+50 serviços"), "suporte rápido", "pagamento pelo app".
+- Categorias fora do MVP, "São Paulo", hora marcada, login com Apple (US$ 99/ano).
+- Fotos de pessoas inexistentes apresentadas como profissionais.
+
 ## 7. Pendências do Bruno
 
 1. Publicar `firestore.rules` (uma vez só; já inclui todas as camadas).
